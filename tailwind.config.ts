@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// Tokens mirror the Steady design system (DESIGN.md) so Kredit shares its look.
+// Colors and radii come from the HSL tokens in src/index.css.
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],

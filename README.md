@@ -2,7 +2,7 @@
 
 A demo credit risk system for a **fictional US small-business lender**. It shows how a fintech runs lending in-house end to end: onboarding, underwriting, decisioning, monitoring, collections and audit. **Synthetic data only. No real customers, no real lending.**
 
-Built on the Steady stack and design system (Vite, React, TypeScript, Tailwind, Steady HSL tokens, Recharts). Everything runs in the browser. No backend is needed for the demo.
+Built with Vite, React, TypeScript, Tailwind and Recharts. Everything runs in the browser. No backend is needed for the demo.
 
 ```sh
 npm install
@@ -45,4 +45,4 @@ npm run build:single   # one self-contained HTML file in dist-single/
 
 ## Not production
 
-The demo has no real KYC vendors, bureau or bank aggregator, and no real LLM. The audit hash is non-cryptographic, and there is no auth or server-side persistence. The natural next step is to move `src/engine` behind Supabase (tables + edge functions), as in Steady.
+The demo has no real KYC vendors, bureau or bank aggregator, and no real LLM. The audit hash is non-cryptographic, and there is no auth or server-side persistence. The natural next step is to move `src/engine` behind Supabase (tables + edge functions).

@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Steady design tokens (copied from steady/src/index.css). All colors HSL. */
+/* Kredit design tokens. All colors HSL. */
 @layer base {
   :root {
     --background: 220 10% 94%;

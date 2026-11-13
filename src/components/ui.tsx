@@ -1,4 +1,4 @@
-// Lightweight UI primitives styled with the Steady design tokens (glass cards, sentence case, neutral palette).
+// Lightweight UI primitives styled with the Kredit design tokens (glass cards, sentence case, neutral palette).
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
