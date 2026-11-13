@@ -125,7 +125,7 @@ export default function PortfolioPage() {
           </div>
         </Card>
         <Card>
-          <CardHead title="Early warnings" sub="Active monitoring triggers on open loans" right={<a href="#/monitoring" className="text-xs underline text-muted-foreground">Open monitoring</a>} />
+          <CardHead title="Early warnings" sub="Active monitoring triggers on open loans" right={<a href="#monitoring" className="text-xs underline text-muted-foreground">Open monitoring</a>} />
           <div className="px-5 pb-5 grid grid-cols-2 gap-3">
             <div><div className="micro">Accounts flagged</div><div className="text-2xl font-bold">{new Set(triggers.map((t) => t.loanId)).size}</div></div>
             <div><div className="micro">High severity</div><div className="text-2xl font-bold text-loss">{highTriggers}</div></div>

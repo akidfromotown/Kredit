@@ -1,6 +1,6 @@
 // Module 12: audit log.
 import { Fragment, useMemo, useState } from "react";
-import { Download, ShieldCheck, ShieldX } from "lucide-react";
+import { Copy, ShieldCheck, ShieldX } from "lucide-react";
 import { useStore } from "../store";
 import { verifyChain, type AuditEntry, type AuditType } from "../engine/audit";
 import { Button, Card, Empty, PageHeader, Pill, Stat, TableWrap, dt, type Tone } from "../components/ui";
@@ -59,12 +59,11 @@ export default function AuditPage() {
   const filter = useMemo(() => (e: AuditEntry) => (type === "all" || e.type === type) && (actor === "all" || e.actorType === actor), [type, actor]);
   const count = (t: AuditType) => world.audit.filter((e) => e.type === t).length;
 
-  const exportJson = () => {
-    const blob = new Blob([JSON.stringify(world.audit, (_k, v) => (v === -Infinity ? "-Infinity" : v), 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "kredit-audit-log.json";
-    a.click();
+  const [copied, setCopied] = useState<"" | "ok" | "fail">("");
+  const [confirmReset, setConfirmReset] = useState(false);
+  const copyJson = () => {
+    const text = JSON.stringify(world.audit, (_k, v) => (v === -Infinity ? "-Infinity" : v), 2);
+    navigator.clipboard?.writeText(text).then(() => setCopied("ok"), () => setCopied("fail")) ?? setCopied("fail");
   };
 
   return (
@@ -72,7 +71,7 @@ export default function AuditPage() {
       <PageHeader
         title="Audit log"
         sub="Append-only record of every application, verification, decision, review, override, policy change and AI output. Each entry stores its full payload and the hash of the entry before it, so any edit breaks the chain."
-        right={<div className="flex gap-2"><Button variant="outline" onClick={exportJson}><Download className="h-4 w-4" />Export JSON</Button></div>}
+        right={<div className="flex items-center gap-2">{copied && <span className="text-xs text-muted-foreground">{copied === "ok" ? "Copied to clipboard" : "Clipboard unavailable here"}</span>}<Button variant="outline" onClick={copyJson}><Copy className="h-4 w-4" />Copy as JSON</Button></div>}
       />
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <Card className="p-4 flex items-center gap-3">
@@ -93,7 +92,14 @@ export default function AuditPage() {
           <option value="all">All actors</option><option value="system">System</option><option value="human">Human</option><option value="ai">AI</option>
         </select>
         <span className="ml-auto text-xs text-muted-foreground">{userActionCount} action(s) by you in this browser.</span>
-        {userActionCount > 0 && <Button variant="ghost" onClick={() => { if (confirm("Reset the demo? This clears your policy versions, reviews, overrides, onboarded applicants and AI log entries in this browser.")) reset(); }}>Reset demo</Button>}
+        {userActionCount > 0 && !confirmReset && <Button variant="ghost" onClick={() => setConfirmReset(true)}>Reset demo</Button>}
+        {confirmReset && (
+          <span className="flex items-center gap-2 text-xs">
+            Clear your policy versions, reviews, overrides, onboarded applicants and AI entries?
+            <Button variant="danger" onClick={() => { reset(); setConfirmReset(false); }}>Reset</Button>
+            <Button variant="ghost" onClick={() => setConfirmReset(false)}>Cancel</Button>
+          </span>
+        )}
       </div>
       <AuditList key={type + actor} filter={filter} />
     </div>

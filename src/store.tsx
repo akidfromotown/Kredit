@@ -1,7 +1,7 @@
 // App state. The seeded world (500 applications decided under POL-1.0, analyst review history) is rebuilt
 // deterministically on every load; the user's own actions are kept as an append-only list in localStorage
 // and replayed on top, so policy edits, reviews, overrides, onboarded applicants and the audit trail persist.
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { appendAudit, type AuditEntry } from "./engine/audit";
 import type { AiOutput } from "./engine/assistant";
 import { AS_OF } from "./engine/dates";
@@ -182,16 +182,10 @@ interface Store {
 const Ctx = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<{ world: World; actions: UserAction[]; version: number } | null>(null);
-
-  useEffect(() => {
-    // build after first paint so the splash shows
-    const id = setTimeout(() => {
-      const actions = loadActions();
-      setState({ world: buildWorld(actions), actions, version: 0 });
-    }, 30);
-    return () => clearTimeout(id);
-  }, []);
+  const [state, setState] = useState<{ world: World; actions: UserAction[]; version: number } | null>(() => {
+    const actions = loadActions();
+    return { world: buildWorld(actions), actions, version: 0 };
+  });
 
   const derived = useMemo(() => {
     if (!state) return null;

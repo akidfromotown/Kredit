@@ -247,7 +247,7 @@ function Impact({ active, draft, changes, note, setNote, onPublish, worldSize }:
                   <div className="micro mb-2">Changed outcomes (first 30)</div>
                   <div className="space-y-1">
                     {ran.moved.slice(0, 30).map((m) => (
-                      <a key={m.id} href={`#/applications/${m.id}`} className="flex items-center gap-2 text-sm hover:underline">
+                      <a key={m.id} href={`#applications-${m.id}`} className="flex items-center gap-2 text-sm hover:underline">
                         <span className="flex-1 truncate">{m.name}</span><StatusPill s={m.from} /><span className="text-muted-foreground">→</span><StatusPill s={m.to} />
                       </a>
                     ))}

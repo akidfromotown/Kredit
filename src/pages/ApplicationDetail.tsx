@@ -28,7 +28,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
 
   return (
     <div>
-      <a href="#/applications" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"><ArrowLeft className="h-4 w-4" />Applications</a>
+      <a href="#applications" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"><ArrowLeft className="h-4 w-4" />Applications</a>
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{b.name}</h1>

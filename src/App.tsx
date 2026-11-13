@@ -31,6 +31,8 @@ const NAV = [
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
+    const host = document.documentElement.getAttribute("data-theme");
+    if (host === "dark" || host === "light") return host === "dark";
     try {
       const s = localStorage.getItem("kredit.theme");
       if (s) return s === "dark";
@@ -39,6 +41,8 @@ function useTheme() {
   });
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
+    document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    if (document.documentElement.hasAttribute("data-theme")) document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
     try { localStorage.setItem("kredit.theme", dark ? "dark" : "light"); } catch { /* ignore */ }
   }, [dark]);
   return [dark, setDark] as const;
@@ -71,7 +75,7 @@ export default function App() {
       </div>
       <header className="sticky top-0 z-20 backdrop-blur-xl bg-background/70 border-b">
         <div className="flex items-center gap-4 px-4 md:px-6 h-14">
-          <a href="#/portfolio" className="font-semibold tracking-tight text-lg">Kredit™</a>
+          <a href="#portfolio" className="font-semibold tracking-tight text-lg">Kredit™</a>
           <span className="hidden sm:inline text-xs text-muted-foreground">Credit risk platform</span>
           <div className="ml-auto flex items-center gap-3">
             <span className="text-xs text-muted-foreground"><Gauge className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />As of {d8(AS_OF)}</span>
@@ -82,7 +86,7 @@ export default function App() {
         </div>
         <nav className="lg:hidden flex gap-1 overflow-x-auto px-3 pb-2">
           {NAV.map((n) => (
-            <a key={n.id} href={`#/${n.id}`} className={cn("px-3 h-8 inline-flex items-center rounded-xl text-sm whitespace-nowrap", section === n.id || (!section && n.id === "portfolio") ? "bg-card shadow-sm font-medium" : "text-muted-foreground")}>
+            <a key={n.id} href={`#${n.id}`} className={cn("px-3 h-8 inline-flex items-center rounded-xl text-sm whitespace-nowrap", section === n.id || (!section && n.id === "portfolio") ? "bg-card shadow-sm font-medium" : "text-muted-foreground")}>
               {n.label}{n.id === "review" && pending > 0 && <span className="ml-1.5 text-[10px] bg-warn/20 text-warn rounded-full px-1.5">{pending}</span>}
             </a>
           ))}
@@ -94,7 +98,7 @@ export default function App() {
             {NAV.map((n) => {
               const active = section === n.id || (!NAV.some((x) => x.id === section) && n.id === "portfolio");
               return (
-                <a key={n.id} href={`#/${n.id}`} className={cn("flex items-center gap-2.5 px-3 h-9 rounded-xl text-sm transition-colors", active ? "bg-card shadow-sm font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
+                <a key={n.id} href={`#${n.id}`} className={cn("flex items-center gap-2.5 px-3 h-9 rounded-xl text-sm transition-colors", active ? "bg-card shadow-sm font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
                   <n.icon className="h-4 w-4" />
                   <span className="flex-1">{n.label}</span>
                   {n.id === "review" && pending > 0 ? <span className="text-[10px] bg-warn/20 text-warn rounded-full px-1.5 font-semibold">{pending}</span> : <span className="text-[10px] text-muted-foreground/70">{n.mod}</span>}
