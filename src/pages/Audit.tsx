@@ -1,0 +1,101 @@
+// Module 12: audit log.
+import { Fragment, useMemo, useState } from "react";
+import { Download, ShieldCheck, ShieldX } from "lucide-react";
+import { useStore } from "../store";
+import { verifyChain, type AuditEntry, type AuditType } from "../engine/audit";
+import { Button, Card, Empty, PageHeader, Pill, Stat, TableWrap, dt, type Tone } from "../components/ui";
+
+const TYPE_TONE: Record<AuditType, Tone> = {
+  APPLICATION_SUBMITTED: "neutral", KYC_COMPLETED: "neutral", DECISION: "solid", REVIEW_RESOLVED: "warn", OVERRIDE: "loss",
+  POLICY_PUBLISHED: "gain", AI_OUTPUT: "outline", DEMO_RESET: "outline",
+};
+
+export function AuditList({ filter, limit = 200 }: { filter?: (e: AuditEntry) => boolean; limit?: number }) {
+  const { world } = useStore();
+  const [open, setOpen] = useState<number | null>(null);
+  const [n, setN] = useState(limit);
+  const rows = useMemo(() => [...world.audit].filter(filter ?? (() => true)).reverse(), [world.audit.length, filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!rows.length) return <Card><Empty>No audit entries.</Empty></Card>;
+  return (
+    <Card>
+      <TableWrap>
+        <table className="tbl">
+          <thead><tr><th>#</th><th>Time (UTC)</th><th>Type</th><th>Actor</th><th>Ref</th><th>Summary</th><th>Hash</th></tr></thead>
+          <tbody>
+            {rows.slice(0, n).map((e) => (
+              <Fragment key={e.seq}>
+                <tr className="cursor-pointer" onClick={() => setOpen(open === e.seq ? null : e.seq)}>
+                  <td className="text-muted-foreground">{e.seq}</td>
+                  <td>{dt(e.at)}</td>
+                  <td><Pill tone={TYPE_TONE[e.type]}>{e.type.toLowerCase().replace(/_/g, " ")}</Pill></td>
+                  <td>{e.actor}{e.actorType === "ai" && <Pill tone="warn" className="ml-1">AI</Pill>}</td>
+                  <td className="font-mono text-xs">{e.ref}</td>
+                  <td className="whitespace-normal min-w-[260px]">{e.summary}</td>
+                  <td className="font-mono text-[10px] text-muted-foreground">{e.hash.slice(0, 10)}…</td>
+                </tr>
+                {open === e.seq && (
+                  <tr>
+                    <td colSpan={7} className="bg-muted/30">
+                      <div className="text-[11px] text-muted-foreground mb-1 font-mono">prev {e.prevHash} → hash {e.hash}</div>
+                      <pre className="text-[11px] leading-snug max-h-80 overflow-auto whitespace-pre-wrap">{JSON.stringify(e.payload, (_k, v) => (v === -Infinity ? "-Infinity" : v), 2)}</pre>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </TableWrap>
+      {rows.length > n && <div className="p-3 text-center"><button className="text-sm underline text-muted-foreground" onClick={() => setN(n + 300)}>Show more ({rows.length - n} older)</button></div>}
+    </Card>
+  );
+}
+
+export default function AuditPage() {
+  const { world, reset, userActionCount } = useStore();
+  const [type, setType] = useState<"all" | AuditType>("all");
+  const [actor, setActor] = useState<"all" | "system" | "human" | "ai">("all");
+  const chain = useMemo(() => verifyChain(world.audit), [world.audit.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filter = useMemo(() => (e: AuditEntry) => (type === "all" || e.type === type) && (actor === "all" || e.actorType === actor), [type, actor]);
+  const count = (t: AuditType) => world.audit.filter((e) => e.type === t).length;
+
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(world.audit, (_k, v) => (v === -Infinity ? "-Infinity" : v), 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "kredit-audit-log.json";
+    a.click();
+  };
+
+  return (
+    <div>
+      <PageHeader
+        title="Audit log"
+        sub="Append-only record of every application, verification, decision, review, override, policy change and AI output. Each entry stores its full payload and the hash of the entry before it, so any edit breaks the chain."
+        right={<div className="flex gap-2"><Button variant="outline" onClick={exportJson}><Download className="h-4 w-4" />Export JSON</Button></div>}
+      />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+        <Card className="p-4 flex items-center gap-3">
+          {chain.ok ? <ShieldCheck className="h-7 w-7 text-gain" /> : <ShieldX className="h-7 w-7 text-loss" />}
+          <div><div className="micro">Hash chain</div><div className="font-semibold">{chain.ok ? `Intact · ${world.audit.length.toLocaleString()} entries` : `Broken at #${chain.brokenAt}`}</div></div>
+        </Card>
+        <Stat label="Decisions" value={count("DECISION")} />
+        <Stat label="Reviews resolved" value={count("REVIEW_RESOLVED")} />
+        <Stat label="Overrides" value={count("OVERRIDE")} />
+        <Stat label="AI outputs" value={count("AI_OUTPUT")} sub="advisory only" />
+      </div>
+      <div className="flex flex-wrap gap-2 items-center mb-3">
+        <select className="inp" value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+          <option value="all">All types</option>
+          {(Object.keys(TYPE_TONE) as AuditType[]).map((t) => <option key={t} value={t}>{t.toLowerCase().replace(/_/g, " ")}</option>)}
+        </select>
+        <select className="inp" value={actor} onChange={(e) => setActor(e.target.value as typeof actor)}>
+          <option value="all">All actors</option><option value="system">System</option><option value="human">Human</option><option value="ai">AI</option>
+        </select>
+        <span className="ml-auto text-xs text-muted-foreground">{userActionCount} action(s) by you in this browser.</span>
+        {userActionCount > 0 && <Button variant="ghost" onClick={() => { if (confirm("Reset the demo? This clears your policy versions, reviews, overrides, onboarded applicants and AI log entries in this browser.")) reset(); }}>Reset demo</Button>}
+      </div>
+      <AuditList key={type + actor} filter={filter} />
+    </div>
+  );
+}
