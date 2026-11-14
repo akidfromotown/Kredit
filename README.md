@@ -15,7 +15,7 @@ npm run build:single   # one self-contained HTML file in dist-single/
 ## Two modes
 
 - **Local demo** (no configuration): the 500-business book is generated in the browser and your actions are saved in that browser only.
-- **Backend** (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set): data lives in Supabase and everyone sees the same decisions and audit log. The browser can only read. Every write goes to the `kredit-api` Edge Function, which runs the decision engine server-side and validates every action. The header shows **Live database** or **Local demo**.
+- **Backend** (`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` set): data lives in Supabase and everyone sees the same decisions and audit log. The browser can only read. Every write goes to the `kredit-api` Edge Function, which runs the decision engine server-side and validates every action. The header shows **Live database** or **Local demo**.
 
 ### Backend architecture
 
@@ -30,7 +30,7 @@ npm run build:single   # one self-contained HTML file in dist-single/
 
 ### Deploying to Supabase
 
-1. Create a Supabase project. From **Project Settings → API** note the project URL, the `anon` key and the `service_role` key.
+1. Create a Supabase project. From **Project Settings → API** note the project URL, the publishable key (`sb_publishable_…`) and the secret / service role key.
 2. Link and push the schema, then deploy the function:
    ```sh
    npx supabase login
@@ -43,7 +43,7 @@ npm run build:single   # one self-contained HTML file in dist-single/
    ```sh
    SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co SUPABASE_SERVICE_ROLE_KEY=... npm run seed
    ```
-4. Copy `.env.example` to `.env.local`, fill in the URL and anon key, and run `npm run dev`.
+4. Copy `.env.example` to `.env.local`, fill in the URL and publishable key, and run `npm run dev`.
 
 Never put the service role key in `.env.local` or anywhere the browser can see it.
 

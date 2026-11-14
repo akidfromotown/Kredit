@@ -1,5 +1,6 @@
 project_id = "kredit"
 
 [functions.kredit-api]
-# Callers must send the project anon key (supabase-js does this automatically).
-verify_jwt = true
+# Publishable keys (sb_publishable_...) are not JWTs, so gateway JWT checks are off.
+# The function treats every caller as untrusted and validates every request itself.
+verify_jwt = false

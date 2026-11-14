@@ -10,7 +10,7 @@ import { rowToAudit, rowToDecision, type AuditRow } from "../server/rows";
 import { fetchAll } from "../server/supabaseDb";
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const anonKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
 
 export const backendEnabled = Boolean(url && anonKey);
 
