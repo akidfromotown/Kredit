@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { History, Play, RotateCcw } from "lucide-react";
 import { useStore } from "../store";
-import { ATTRIBUTE_META, attrMeta } from "../engine/attributes";
+import { attrMeta } from "../engine/attributes";
 import { decide, type Decision } from "../engine/decision";
 import { BANDS, clonePolicy, nextVersion, scoreRange, type Band, type CreditPolicy, type Operator } from "../engine/policy";
 import { Button, Card, CardHead, Field, PageHeader, Pill, Stat, StatusPill, TableWrap, Tabs, dt, pct, usd } from "../components/ui";
@@ -59,7 +59,7 @@ export default function PolicyPage() {
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <Tabs<Tab> value={tab} onChange={setTab} tabs={[
           { id: "rules", label: "Knockout rules" }, { id: "scorecard", label: "Scorecard & cutoffs" }, { id: "pricing", label: "Limits, pricing & affordability" },
-          { id: "impact", label: <span>Impact preview{changes.length > 0 && <span className="ml-1.5 text-[10px] bg-warn/20 text-warn rounded-full px-1.5">{changes.length}</span>}</span> },
+          { id: "impact", label: <span>Impact preview{changes.length > 0 && <span className="ml-1.5 text-[10px] text-muted-foreground tabular-nums">{changes.length}</span>}</span> },
           { id: "history", label: "Versions" },
         ]} />
         {changes.length > 0 && <Button variant="ghost" onClick={() => setDraft(clonePolicy(policy))}><RotateCcw className="h-4 w-4" />Discard draft</Button>}
@@ -89,7 +89,6 @@ export default function PolicyPage() {
               </tbody>
             </table>
           </TableWrap>
-          <div className="px-5 py-3 text-xs text-muted-foreground">Attributes available: {ATTRIBUTE_META.map((m) => m.label).join(" · ")}</div>
         </Card>
       )}
 

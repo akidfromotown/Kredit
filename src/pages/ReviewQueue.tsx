@@ -20,7 +20,7 @@ export default function ReviewQueuePage() {
     <div>
       <PageHeader title="Review queue" sub="Applications the engine routed to a person: scores in the review range, KYC refers, large exposures and stated-revenue mismatches. The analyst decides; the engine's reasons explain why the file is here." />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <Stat label="Waiting" value={pending.length} tone={pending.length ? "warn" : undefined} />
+        <Stat label="Waiting" value={pending.length} />
         <Stat label="Oldest" value={pending[0] ? d8(pending[0].decidedAt) : "—"} />
         <Stat label="Resolved" value={resolved.length} />
         <Stat label="Approved in review" value={`${approvedShare.toFixed(0)}%`} />
@@ -39,7 +39,7 @@ export default function ReviewQueuePage() {
                     <td className="text-right">{usd(d.inputs.application.requestedAmount)}</td>
                     <td className="text-right">{d.offer ? usd(d.offer.amount) : "—"}</td>
                     <td className="text-right">{d.score} ({d.band})</td>
-                    <td className="space-x-1">{d.reasons.filter((r) => r.stage === "review").map((r) => <Pill key={r.code} tone="warn" className="font-mono">{r.code}</Pill>)}</td>
+                    <td className="space-x-1">{d.reasons.filter((r) => r.stage === "review").map((r) => <Pill key={r.code} tone="outline" className="font-mono">{r.code}</Pill>)}</td>
                   </tr>
                 ))}
               </tbody>

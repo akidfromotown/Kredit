@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useStore } from "../store";
-import { DATASET_SEED, STANDARD_LABEL_TERMS, industryByName } from "../engine/data";
+import { DATASET_SEED, industryByName } from "../engine/data";
 import { validateScorecard } from "../engine/portfolio";
 import { Card, CardHead, PageHeader, Pill, Stat, TableWrap, chartColors, pct, tooltipStyle, usd } from "../components/ui";
 
@@ -62,23 +62,12 @@ export default function DataModelPage() {
               <tbody>{m.v.byBand.map((b) => <tr key={b.band}><td className="font-semibold">{b.band}</td><td className="text-right">{b.n}</td><td className="text-right">{b.bads}</td><td className="text-right font-medium">{pct(b.badRate)}</td></tr>)}</tbody>
             </table>
           </TableWrap>
-          <p className="px-5 py-3 text-xs text-muted-foreground">The outcome label is simulated as if every applicant were funded at the requested amount for {STANDARD_LABEL_TERMS.termMonths} months at {STANDARD_LABEL_TERMS.aprPct}% APR. It exists only to validate the scorecard; no engine reads it.</p>
         </Card>
       </div>
 
-      <div className="grid xl:grid-cols-3 gap-4 mt-4">
-        <Card className="xl:col-span-2">
-          <CardHead title="How the data is generated" />
-          <div className="px-5 pb-5 text-sm space-y-2 leading-relaxed">
-            <p>Each business gets a hidden credit quality drawn from a normal distribution. It drives revenue size and growth, volatility, expense ratio, cash buffer, existing debt (term loans or daily-remittance advances), customer concentration, owner credit score and time in business, all with independent noise so no single attribute gives the answer away.</p>
-            <p>A day-by-day bank account is simulated from 12 months before the application month to the as-of date: card settlements or invoice payments in, payroll, rent, inventory, utilities, tax, loan remittances and owner draws out. Debits that exceed the balance are returned or overdrawn with a fee, which produces the NSF history. Owner capital injections cover deep overdrafts some of the time.</p>
-            <p>Some businesses suffer a revenue shock or take on additional advances after the application. Those events show up only in post-application bank data, so monitoring can catch them and underwriting cannot.</p>
-            <p>Booked loans are simulated month by month: the chance of missing a payment rises with hidden risk, payment burden, any shock and stacking. Delinquent accounts cure, stay or roll forward, and 90+ DPD charges off.</p>
-            <p className="text-muted-foreground">Names, EINs, owners, lenders, landlords and payers are all generated. Any resemblance to a real business is coincidental.</p>
-          </div>
-        </Card>
+      <div className="grid gap-4 mt-4">
         <Card>
-          <CardHead title="Mix" />
+          <CardHead title="Industry mix" />
           <div className="px-5 pb-2 h-64">
             <ResponsiveContainer>
               <BarChart data={m.ind.map(([k, v]) => ({ k, v }))} layout="vertical" margin={{ left: 10 }}>

@@ -25,7 +25,7 @@ export default function MonitoringPage() {
     vint.forEach((v) => { if (v.cum30[i] != null && v.loans >= 5) row[monthLabel(v.vintage)] = Number(v.cum30[i]!.toFixed(2)); });
     return row;
   });
-  const palette = [chartColors.c1, chartColors.c2, chartColors.c3, chartColors.c4, chartColors.c5];
+  const palette = ["hsl(var(--foreground))"];
   const maxCell = Math.max(1, ...vint.flatMap((v) => v.cum30.filter((x): x is number => x != null)));
 
   return (
@@ -84,7 +84,7 @@ export default function MonitoringPage() {
                     <td className="text-right">{v.loans}</td>
                     <td className="text-right">{usd(v.amount, true)}</td>
                     {v.cum30.map((c, i) => (
-                      <td key={i} className="text-right text-xs" style={c != null ? { background: `hsl(var(--loss) / ${(c / maxCell) * 0.45})` } : undefined}>{c == null ? "" : c.toFixed(1)}</td>
+                      <td key={i} className="text-right text-xs" style={c != null && c > 0 ? { background: `hsl(var(--foreground) / ${(c / maxCell) * 0.22})` } : undefined}>{c == null ? "" : c.toFixed(1)}</td>
                     ))}
                   </tr>
                 ))}
@@ -127,7 +127,7 @@ export default function MonitoringPage() {
                   {ROLL_TO.map((t, j) => {
                     const v = roll[i][j] * 100;
                     const worse = j > i && t !== "paidoff";
-                    return <td key={t} className="text-right" style={v > 0.05 ? { background: `hsl(var(--${worse ? "loss" : "gain"}) / ${Math.min(v / 100, 1) * 0.35})` } : undefined}>{v > 0.05 ? `${v.toFixed(1)}%` : "·"}</td>;
+                    return <td key={t} className="text-right" style={v > 0.05 && worse ? { background: `hsl(var(--foreground) / ${Math.min(v / 100, 1) * 0.3 + 0.03})` } : undefined}>{v > 0.05 ? `${v.toFixed(1)}%` : "·"}</td>;
                   })}
                   {rollView === "blend" && <td className="text-right text-muted-foreground">{(blend.weights[i] * 100).toFixed(0)}%</td>}
                 </tr>

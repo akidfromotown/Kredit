@@ -31,10 +31,10 @@ export default function CollectionsPage() {
           const bal = ls.reduce((a, l) => a + l.balance, 0);
           return (
             <button key={s.id} onClick={() => setStage(s.id)} className="text-left">
-              <Card className={`p-4 ${stage === s.id ? "ring-2 ring-ring/40" : ""}`}>
+              <Card className={`p-4 transition-colors ${stage === s.id ? "!bg-foreground/[0.07]" : ""}`}>
                 <div className="micro">{s.name} · {s.dpd} DPD</div>
-                <div className="text-[21px] font-bold tracking-tight mt-1">{ls.length} <span className="text-sm font-medium text-muted-foreground">accounts</span></div>
-                <div className="text-xs text-muted-foreground">{usd(bal)} · {pct((bal / Math.max(outstanding, 1)) * 100, 2)} of book</div>
+                <div className="mt-3 flex items-baseline gap-1.5"><span className="num text-[30px] leading-none">{ls.length}</span><span className="text-xs text-muted-foreground">accounts</span>{stage === s.id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-signal" />}</div>
+                <div className="text-xs text-muted-foreground mt-1.5 tabular-nums">{usd(bal, true)}</div>
               </Card>
             </button>
           );
@@ -74,7 +74,7 @@ export default function CollectionsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
         <Stat label="Open balance" value={usd(outstanding, true)} sub={`${open.length} loans`} />
         <Stat label="Charged off to date" value={usd(co.reduce((s, l) => s + l.chargedOff, 0), true)} sub={`${co.length} loans`} />
-        <Stat label="Forecast 12m net loss" value={usd(total12, true)} sub={`${pct((total12 / Math.max(fc.startBalance, 1)) * 100)} of open balance`} tone="warn" />
+        <Stat label="Forecast 12m net loss" value={usd(total12, true)} sub={`${pct((total12 / Math.max(fc.startBalance, 1)) * 100)} of open balance`} />
         <Stat label="Assumptions" value={`${pct(RECOVERY_RATE * 100, 0)} recovery`} sub={`${pct(fc.amortRate * 100)} monthly paydown on current`} />
       </div>
       <Card className="mt-4">

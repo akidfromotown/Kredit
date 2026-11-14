@@ -279,7 +279,7 @@ function HumanActions({ b, d, policy }: { b: Business; d: Decision; policy: Cred
   };
 
   return (
-    <Card className={pending ? "ring-2 ring-warn/40" : ""}>
+    <Card className={pending ? "ring-1 ring-signal/40" : ""}>
       <CardHead
         title={pending ? "Manual review" : "Override"}
         sub={pending ? "This application is waiting for an analyst. Your decision, note and reasons are stored on the decision record." : "Reverse the automated outcome. Overrides require a written justification and are flagged in the audit log."}
@@ -344,7 +344,7 @@ function BankTab({ b }: { b: Business }) {
               <YAxis tickFormatter={(v) => usd(v, true)} tick={{ fontSize: 11, fill: chartColors.axis }} width={56} />
               <Tooltip {...tooltipStyle} formatter={(v: number) => usd(v)} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area dataKey="revenue" name="Revenue" stroke={chartColors.c2} fill={chartColors.c2} fillOpacity={0.15} />
+              <Area dataKey="revenue" name="Revenue" stroke={chartColors.c1} fill={chartColors.c1} fillOpacity={0.1} />
               <Line dataKey="operatingExpenses" name="Operating expenses" stroke={chartColors.c3} dot={false} strokeWidth={1.5} />
               <Line dataKey="endBalance" name="Month-end balance" stroke={chartColors.c1} dot={false} strokeWidth={2} />
             </ComposedChart>

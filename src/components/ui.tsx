@@ -107,17 +107,17 @@ export function Stat({ label, value, tone, term, spark, sparkTone, delta }: {
 }
 
 const TONES = {
-  neutral: "bg-secondary text-secondary-foreground",
-  gain: "bg-gain/15 text-gain",
-  loss: "bg-loss/15 text-loss",
-  warn: "bg-warn/15 text-warn",
+  neutral: "bg-foreground/[0.06] text-muted-foreground",
+  gain: "bg-gain/10 text-gain",
+  loss: "bg-loss/10 text-loss",
+  warn: "bg-warn/10 text-warn",
   solid: "bg-primary text-primary-foreground",
-  outline: "border text-muted-foreground",
+  outline: "border border-[hsl(var(--glass-line))] text-muted-foreground",
 };
 export type Tone = keyof typeof TONES;
 
 export function Pill({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
-  return <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap", TONES[tone], className)}>{children}</span>;
+  return <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap", TONES[tone], className)}>{children}</span>;
 }
 
 export function statusTone(s: string): Tone {
@@ -129,7 +129,13 @@ export function statusTone(s: string): Tone {
 
 export function StatusPill({ s }: { s: string }) {
   const label = s === "PENDING_REVIEW" ? "Pending review" : s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, " ");
-  return <Pill tone={statusTone(s)}>{label}</Pill>;
+  const t = statusTone(s);
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[12px] whitespace-nowrap">
+      <span className={cn("h-1.5 w-1.5 rounded-full", t === "gain" && "bg-gain", t === "loss" && "bg-loss", t === "warn" && "bg-warn", t === "neutral" && "bg-muted-foreground")} />
+      {label}
+    </span>
+  );
 }
 
 export function Button({ variant = "primary", className, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "ghost" | "outline" | "danger" }) {
@@ -164,12 +170,11 @@ export function TableWrap({ children, className }: { children: ReactNode; classN
   return <div className={cn("overflow-x-auto", className)}>{children}</div>;
 }
 
-export function PageHeader({ title, sub, right }: { title: string; sub?: ReactNode; right?: ReactNode }) {
+export function PageHeader({ title, right }: { title: string; sub?: ReactNode; right?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        {sub && <p className="text-sm text-muted-foreground mt-1 max-w-3xl">{sub}</p>}
+        <h1 className="text-2xl font-light tracking-tight">{title}</h1>
       </div>
       {right}
     </div>
