@@ -42,16 +42,16 @@ function useTheme() {
     const host = document.documentElement.getAttribute("data-theme");
     if (host === "dark" || host === "light") return host === "dark";
     try {
-      const s = localStorage.getItem("kredit.theme");
+      const s = localStorage.getItem("kredit.theme.v2");
       if (s) return s === "dark";
     } catch { /* ignore */ }
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+    return true; // dark is the house look
   });
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
     if (document.documentElement.hasAttribute("data-theme")) document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-    try { localStorage.setItem("kredit.theme", dark ? "dark" : "light"); } catch { /* ignore */ }
+    try { localStorage.setItem("kredit.theme.v2", dark ? "dark" : "light"); } catch { /* ignore */ }
   }, [dark]);
   return [dark, setDark] as const;
 }
@@ -78,11 +78,14 @@ export default function App() {
 
   const isActive = (id: string) => section === id || (!NAV.some((x) => x.id === section) && id === "portfolio");
   const badge = (id: string) =>
-    id === "review" && pending > 0 ? <span className="ml-auto text-[10px] bg-warn/20 text-warn rounded-full px-1.5 py-px font-semibold tabular-nums">{pending}</span> : null;
+    id === "review" && pending > 0 ? (
+      <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground tabular-nums">{pending}<span className="h-1.5 w-1.5 rounded-full bg-signal" /></span>
+    ) : null;
 
   return (
     <div className="min-h-screen">
-      <div className="bg-primary text-primary-foreground text-[11px] text-center px-4 py-1.5">
+      <div className="app-light" aria-hidden="true" />
+      <div className="bg-primary text-primary-foreground dark:bg-foreground/[0.05] dark:text-muted-foreground text-[11px] text-center px-4 py-1.5">
         Demo · fictional US small-business lender · synthetic data only · no real customers or lending
       </div>
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/70 border-b">
@@ -108,25 +111,35 @@ export default function App() {
         </nav>
       </header>
       <div className="flex">
-        <aside className="hidden lg:block w-60 shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] p-3 overflow-y-auto">
-          <nav className="space-y-4">
-            {NAV_GROUPS.map((g) => (
-              <div key={g.title}>
-                <div className="micro px-3 pb-1">{g.title}</div>
-                <div className="space-y-0.5">
-                  {g.items.map((n) => (
-                    <a key={n.id} href={`#${n.id}`} aria-current={isActive(n.id) ? "page" : undefined} className={cn("flex items-center gap-2.5 px-3 h-9 rounded-xl text-sm transition-colors", isActive(n.id) ? "bg-card shadow-sm font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
-                      <n.icon className="h-4 w-4" />
-                      <span>{n.label}</span>
-                      {badge(n.id)}
-                    </a>
-                  ))}
+        <aside className="hidden lg:block w-64 shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] p-3">
+          <div className="panel rounded-2xl h-full flex flex-col py-4">
+            <nav className="flex-1 overflow-y-auto">
+              {NAV_GROUPS.map((g, gi) => (
+                <div key={g.title} className={cn("px-3", gi > 0 && "mt-3 pt-3 border-t border-[hsl(var(--glass-line))] mx-3 px-0")}>
+                  <div className="micro px-3 pb-1.5">{g.title}</div>
+                  <div className="space-y-0.5">
+                    {g.items.map((n) => {
+                      const on = isActive(n.id);
+                      return (
+                        <a key={n.id} href={`#${n.id}`} aria-current={on ? "page" : undefined} className={cn("relative flex items-center gap-2.5 px-3 h-9 rounded-lg text-[13px] transition-colors", on ? "bg-foreground/[0.07] text-foreground font-medium" : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04]")}>
+                          {on && <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-signal" />}
+                          <n.icon className="h-4 w-4" strokeWidth={1.75} />
+                          <span>{n.label}</span>
+                          {badge(n.id)}
+                        </a>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </nav>
-          <div className="mt-6 mx-3 text-[11px] text-muted-foreground leading-relaxed">
-            Rules and the scorecard make every decision. The AI assistant drafts and explains; it cannot approve or decline.
+              ))}
+            </nav>
+            <div className="mx-3 mt-3 pt-3 border-t border-[hsl(var(--glass-line))] flex items-center gap-3 px-3">
+              <span className="grid place-items-center h-8 w-8 rounded-full border border-[hsl(var(--glass-line))] text-[11px] text-muted-foreground">CR</span>
+              <span className="min-w-0">
+                <span className="block text-[13px] font-medium">Credit risk</span>
+                <span className="block text-[11px] text-muted-foreground">Demo workspace</span>
+              </span>
+            </div>
           </div>
         </aside>
         <main className="flex-1 min-w-0 px-4 md:px-6 py-6 max-w-[1400px]">{page}</main>

@@ -88,7 +88,7 @@ function Verdict({ b, d, policy }: { b: Business; d: Decision; policy: CreditPol
             <span className={cn("micro", tone === "gain" && "text-gain", tone === "loss" && "text-loss", tone === "warn" && "text-warn")}>{status === "PENDING_REVIEW" ? "Pending review" : status.toLowerCase()}</span>
             {d.human?.kind === "override" && <Pill tone="outline">override</Pill>}
           </div>
-          <div className="text-2xl font-bold tracking-tight mt-1.5">{headline}</div>
+          <div className="num text-[32px] leading-tight mt-2">{headline}</div>
           <ul className="mt-2 space-y-1 text-sm">
             {detail.map((t, i) => <li key={i} className="flex gap-2"><span className="text-muted-foreground">•</span><span>{t}</span></li>)}
           </ul>
@@ -110,9 +110,9 @@ function Verdict({ b, d, policy }: { b: Business; d: Decision; policy: CreditPol
 }
 
 const Fact = ({ k, v, term }: { k: string; v: string; term?: Term }) => (
-  <div className="glass-pill rounded-2xl px-3 py-2">
+  <div className="rounded-xl border border-[hsl(var(--glass-line))] px-3 py-2">
     <div className="text-[10px] text-muted-foreground flex items-center">{k}{term && <InfoTip term={term} align="right" />}</div>
-    <div className="text-sm font-semibold tabular-nums mt-0.5">{v}</div>
+    <div className="num text-lg mt-0.5">{v}</div>
   </div>
 );
 

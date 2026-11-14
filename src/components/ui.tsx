@@ -17,7 +17,7 @@ export const dt = (iso: string) => new Date(iso).toLocaleString("en-US", { month
 export const d8 = (iso: string) => new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn("glass rounded-3xl", className)}>{children}</div>;
+  return <div className={cn("glass rounded-2xl", className)}>{children}</div>;
 }
 
 /** Small info button that explains a term in plain language (hover, focus or tap). */
@@ -80,7 +80,7 @@ export function CardHead({ title, right, term }: { title: ReactNode; sub?: React
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 pb-3">
       <div className="min-w-0">
-        <h3 className="text-base font-semibold tracking-tight flex items-center">{title}{term && <InfoTip term={term} align="left" />}</h3>
+        <h3 className="text-[15px] font-medium tracking-tight flex items-center">{title}{term && <InfoTip term={term} align="left" />}</h3>
         {/* card subtitles intentionally not rendered: cards carry short titles only */}
       </div>
       {right}
@@ -95,9 +95,9 @@ export function Stat({ label, value, tone, term, spark, sparkTone, delta }: {
   delta?: { text: string; good: boolean | null };
 }) {
   return (
-    <Card className="p-4 rounded-3xl flex flex-col">
+    <Card className="p-4 flex flex-col">
       <div className="micro flex items-center">{label}{term && <InfoTip term={term} align="left" />}</div>
-      <div className={cn("text-[22px] font-bold tracking-tight tabular-nums leading-none mt-1.5", tone === "gain" && "text-gain", tone === "loss" && "text-loss", tone === "warn" && "text-warn")}>{value}</div>
+      <div className={cn("num text-[30px] leading-none mt-3", tone === "gain" && "text-gain", tone === "loss" && "text-loss", tone === "warn" && "text-warn")}>{value}</div>
       {spark && <div className="mt-2.5 -mx-0.5"><Sparkline values={spark} tone={sparkTone} /></div>}
       {delta && (
         <div className={cn("text-[11px] font-semibold mt-2", delta.good === true && "text-gain", delta.good === false && "text-loss", delta.good === null && "text-muted-foreground")}>{delta.text}</div>

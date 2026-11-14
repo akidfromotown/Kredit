@@ -6,14 +6,14 @@ export function ScoreGauge({ score, sc }: { score: number; sc: Scorecard }) {
   const [lo, hi] = scoreRange(sc);
   const pos = (v: number) => `${Math.min(100, Math.max(0, ((v - lo) / (hi - lo)) * 100))}%`;
   const zones = [
-    { from: lo, to: sc.declineCutoff, cls: "bg-loss/25", label: "Decline" },
-    { from: sc.declineCutoff, to: sc.approveCutoff, cls: "bg-warn/25", label: "Review" },
-    { from: sc.approveCutoff, to: hi, cls: "bg-gain/25", label: "Approve" },
+    { from: lo, to: sc.declineCutoff, cls: "bg-foreground/[0.08]", label: "Decline" },
+    { from: sc.declineCutoff, to: sc.approveCutoff, cls: "bg-foreground/[0.18]", label: "Review" },
+    { from: sc.approveCutoff, to: hi, cls: "bg-foreground/[0.32]", label: "Approve" },
   ];
   const floors = (["A", "B", "C", "D"] as const).map((b) => ({ b, v: sc.bandFloors[b] })).filter((f) => f.v > lo && f.v < hi);
   return (
     <div className="pt-7 pb-6" role="img" aria-label={`Score ${score} on a scale from ${lo} to ${hi}. Decline below ${sc.declineCutoff}, approve from ${sc.approveCutoff}.`}>
-      <div className="relative h-3 rounded-full overflow-hidden flex">
+      <div className="relative h-1.5 rounded-full overflow-hidden flex gap-0.5">
         {zones.map((z) => (
           <div key={z.label} className={z.cls} style={{ width: `${((z.to - z.from) / (hi - lo)) * 100}%` }} />
         ))}
