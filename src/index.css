@@ -4,8 +4,8 @@
 @tailwind utilities;
 
 /* Kredit design tokens. All colors HSL.
-   Layout concept: content floats on translucent glass panels over a soft, slowly drifting colour field,
-   so depth and grouping come from the material rather than from borders. */
+   Layout concept: content sits on translucent glass panels over a plain, still background,
+   so grouping comes from the material rather than from borders. */
 @layer base {
   :root {
     --background: 222 30% 95%;
@@ -33,11 +33,7 @@
     --glass-shadow: 224 40% 20% / 0.08;
     --glass-line: 222 25% 50% / 0.12;
 
-    /* backdrop colour field */
-    --blob-1: 214 90% 72%;
-    --blob-2: 168 60% 70%;
-    --blob-3: 262 70% 80%;
-    --blob-4: 32 90% 82%;
+    --backdrop-top: 220 35% 91%;
 
     --gain: 158 64% 32%;
     --loss: 0 68% 48%;
@@ -72,10 +68,7 @@
     --glass-shadow: 0 0% 0% / 0.45;
     --glass-line: 0 0% 100% / 0.08;
 
-    --blob-1: 214 80% 38%;
-    --blob-2: 170 60% 26%;
-    --blob-3: 262 55% 34%;
-    --blob-4: 22 70% 30%;
+    --backdrop-top: 224 28% 11%;
 
     --gain: 156 55% 52%;
     --loss: 0 75% 66%;
@@ -93,23 +86,13 @@
 }
 
 @layer components {
-  /* Soft colour field behind the glass. Fixed so panels refract it as the page scrolls. */
+  /* Plain, still backdrop: a faint top-to-bottom tint so glass panels read as layers. No shapes, no motion. */
   .app-backdrop {
     position: fixed;
-    inset: -10%;
+    inset: 0;
     z-index: -1;
     pointer-events: none;
-    background:
-      radial-gradient(38% 42% at 12% 18%, hsl(var(--blob-1) / 0.55), transparent 70%),
-      radial-gradient(34% 40% at 88% 12%, hsl(var(--blob-3) / 0.5), transparent 70%),
-      radial-gradient(40% 44% at 78% 82%, hsl(var(--blob-2) / 0.45), transparent 70%),
-      radial-gradient(30% 34% at 22% 88%, hsl(var(--blob-4) / 0.4), transparent 70%),
-      hsl(var(--background));
-    animation: drift 40s ease-in-out infinite alternate;
-  }
-  @keyframes drift {
-    from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(-2%, 1.5%, 0) scale(1.04); }
+    background: linear-gradient(180deg, hsl(var(--backdrop-top)) 0%, hsl(var(--background)) 55%);
   }
 
   /* The glass material: translucent fill, blur + saturation, bright top edge, soft lift. */
@@ -163,10 +146,6 @@
     border: 1px solid hsl(var(--glass-line));
   }
   :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-backdrop { animation: none; }
 }
 
 /* People who ask the OS for less transparency get solid panels. */
