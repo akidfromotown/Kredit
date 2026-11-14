@@ -224,21 +224,15 @@ function DecisionTab({ b, d, policy }: { b: Business; d: Decision; policy: Credi
               const line = d.scoreLines.find((l) => l.attribute === m.key);
               const f = line ? line.points / line.maxPoints : null;
               return (
-                <div key={m.key} className="flex items-center justify-between gap-3 text-sm">
+                <div key={m.key} className="flex items-center justify-between gap-3 text-sm" title={m.help}>
                   <span className="text-muted-foreground flex items-center">
                     <span className={cn("h-2 w-2 rounded-full mr-2 shrink-0", f == null ? "bg-foreground/15" : f >= 0.7 ? "bg-gain" : f >= 0.4 ? "bg-warn" : "bg-loss")} title={f == null ? "Not scored" : `${line!.points} of ${line!.maxPoints} points`} />
-                    {m.label}<InfoTip text={m.help} align="left" />
+                    {m.label}
                   </span>
                   <span className="tabular-nums font-medium">{formatAttr(m.key, a[m.key])}</span>
                 </div>
               );
             })}
-            <div className="flex gap-3 pt-2 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-gain" />Strong</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-warn" />Average</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-loss" />Weak</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-foreground/15" />Not scored</span>
-            </div>
           </div>
         </Card>
       </div>

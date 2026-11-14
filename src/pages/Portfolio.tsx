@@ -10,18 +10,17 @@ import { is30Plus, isDelinquent } from "../engine/loanSim";
 import { BANDS } from "../engine/policy";
 import { Card, CardHead, InfoTip, PageHeader, Stat, chartColors, cn, d8, pct, tooltipStyle, usd } from "../components/ui";
 
-function ActionCard({ href, icon, tone, count, title, detail }: { href: string; icon: ReactNode; tone: "warn" | "loss" | "accent"; count: ReactNode; title: string; detail: string }) {
+function ActionCard({ href, icon, tone, count, title }: { href: string; icon: ReactNode; tone: "warn" | "loss" | "accent"; count: ReactNode; title: string; detail?: string }) {
   return (
-    <a href={href} className="group glass rounded-[22px] p-4 flex items-start gap-3 transition-transform hover:-translate-y-0.5">
-      <span className={cn("grid place-items-center h-9 w-9 rounded-xl shrink-0", tone === "warn" && "bg-warn/15 text-warn", tone === "loss" && "bg-loss/15 text-loss", tone === "accent" && "bg-accent/15 text-accent")}>{icon}</span>
+    <a href={href} className="group glass rounded-3xl p-4 flex items-center gap-3 transition-transform hover:-translate-y-0.5">
+      <span className={cn("grid place-items-center h-9 w-9 rounded-xl shrink-0", tone === "warn" && "bg-warn/15 text-warn", tone === "loss" && "bg-loss/15 text-loss", tone === "accent" && "bg-foreground/10 text-foreground")}>{icon}</span>
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline gap-2">
           <span className="text-xl font-bold tabular-nums">{count}</span>
           <span className="text-sm font-medium">{title}</span>
         </span>
-        <span className="block text-xs text-muted-foreground mt-0.5">{detail}</span>
       </span>
-      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground mt-1 shrink-0" />
+      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground shrink-0" />
     </a>
   );
 }
@@ -162,8 +161,8 @@ export default function PortfolioPage() {
           <div className="px-5 pb-5 space-y-3">
             {m.bandMix.map((b) => (
               <div key={b.band} className="flex items-center gap-3 text-sm">
-                <span className="w-7 h-7 grid place-items-center rounded-lg glass-pill font-semibold text-xs">{b.band}</span>
-                <div className="flex-1 h-2.5 rounded-full bg-foreground/5 overflow-hidden"><div className="h-full rounded-full bg-accent/70" style={{ width: `${(b.balance / Math.max(m.outstanding, 1)) * 100}%` }} /></div>
+                <span className="w-6 font-semibold">{b.band}</span>
+                <div className="flex-1 h-2.5 rounded-full bg-foreground/5 overflow-hidden"><div className="h-full rounded-full bg-primary/70" style={{ width: `${(b.balance / Math.max(m.outstanding, 1)) * 100}%` }} /></div>
                 <span className="w-20 text-right tabular-nums font-medium">{usd(b.balance, true)}</span>
                 <span className="w-16 text-right text-muted-foreground tabular-nums text-xs">{b.count} loans</span>
               </div>

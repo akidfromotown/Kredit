@@ -82,45 +82,41 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <div className="app-backdrop" aria-hidden="true" />
-      <div className="text-[11px] text-center px-4 py-1.5 text-muted-foreground">
+      <div className="bg-primary text-primary-foreground text-[11px] text-center px-4 py-1.5">
         Demo · fictional US small-business lender · synthetic data only · no real customers or lending
       </div>
-      <header className="sticky top-0 z-30 px-3 md:px-4 pb-2">
-        <div className="glass rounded-[22px] flex items-center gap-3 px-4 h-14">
-          <a href="#portfolio" className="flex items-center gap-2 font-semibold tracking-tight text-lg">
-            <span className="grid place-items-center h-7 w-7 rounded-[9px] bg-accent text-accent-foreground text-sm font-bold shadow-sm">K</span>
-            Kredit
-          </a>
-          <span className="hidden md:inline text-xs text-muted-foreground">Credit risk platform</span>
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            <span title={mode === "backend" ? "Reading from Supabase; writes go through the kredit-api function" : "No backend configured; data lives in this browser"} className={cn("hidden sm:inline-flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1", mode === "backend" ? "bg-gain/15 text-gain" : "glass-pill text-muted-foreground")}>
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/70 border-b">
+        <div className="flex items-center gap-4 px-4 md:px-6 h-14">
+          <a href="#portfolio" className="font-semibold tracking-tight text-lg">Kredit™</a>
+          <span className="hidden sm:inline text-xs text-muted-foreground">Credit risk platform</span>
+          <div className="ml-auto flex items-center gap-3">
+            <span title={mode === "backend" ? "Reading from Supabase; writes go through the kredit-api function" : "No backend configured; data lives in this browser"} className={cn("hidden sm:inline-flex items-center gap-1.5 text-[11px] rounded-full px-2 py-0.5", mode === "backend" ? "bg-gain/15 text-gain" : "bg-secondary text-muted-foreground")}>
               <span className={cn("h-1.5 w-1.5 rounded-full", mode === "backend" ? "bg-gain" : "bg-muted-foreground")} />{mode === "backend" ? "Live database" : "Local demo"}
             </span>
             <span className="text-xs text-muted-foreground whitespace-nowrap"><Gauge className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />As of {d8(AS_OF)}</span>
-            <button aria-label="Toggle theme" onClick={() => setDark(!dark)} className="h-9 w-9 grid place-items-center rounded-xl glass-pill">
+            <button aria-label="Toggle theme" onClick={() => setDark(!dark)} className="h-8 w-8 grid place-items-center rounded-xl hover:bg-muted">
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
           </div>
         </div>
-        <nav className="lg:hidden glass rounded-2xl mt-2 flex gap-1 overflow-x-auto p-1">
+        <nav className="lg:hidden flex gap-1 overflow-x-auto px-3 pb-2">
           {NAV.map((n) => (
-            <a key={n.id} href={`#${n.id}`} className={cn("px-3 h-8 inline-flex items-center gap-1.5 rounded-xl text-sm whitespace-nowrap", isActive(n.id) ? "glass-pill font-medium" : "text-muted-foreground")}>
+            <a key={n.id} href={`#${n.id}`} className={cn("px-3 h-8 inline-flex items-center gap-1.5 rounded-xl text-sm whitespace-nowrap", isActive(n.id) ? "bg-card shadow-sm font-medium" : "text-muted-foreground")}>
               {n.label}{badge(n.id)}
             </a>
           ))}
         </nav>
       </header>
-      <div className="flex px-3 md:px-4 gap-4">
-        <aside className="hidden lg:block w-60 shrink-0 sticky top-[84px] self-start">
-          <nav className="glass rounded-[24px] p-2.5 space-y-4">
+      <div className="flex">
+        <aside className="hidden lg:block w-60 shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] p-3 overflow-y-auto">
+          <nav className="space-y-4">
             {NAV_GROUPS.map((g) => (
               <div key={g.title}>
-                <div className="micro px-3 pt-1 pb-1.5">{g.title}</div>
+                <div className="micro px-3 pb-1">{g.title}</div>
                 <div className="space-y-0.5">
                   {g.items.map((n) => (
-                    <a key={n.id} href={`#${n.id}`} aria-current={isActive(n.id) ? "page" : undefined} className={cn("flex items-center gap-2.5 px-3 h-9 rounded-xl text-sm transition-all", isActive(n.id) ? "glass-pill font-medium text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-foreground/5")}>
-                      <n.icon className={cn("h-4 w-4", isActive(n.id) && "text-accent")} />
+                    <a key={n.id} href={`#${n.id}`} aria-current={isActive(n.id) ? "page" : undefined} className={cn("flex items-center gap-2.5 px-3 h-9 rounded-xl text-sm transition-colors", isActive(n.id) ? "bg-card shadow-sm font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
+                      <n.icon className="h-4 w-4" />
                       <span>{n.label}</span>
                       {badge(n.id)}
                     </a>
@@ -129,11 +125,11 @@ export default function App() {
               </div>
             ))}
           </nav>
-          <div className="glass rounded-[20px] mt-3 p-3.5 text-[11px] text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-foreground">How decisions are made.</span> Rules and the scorecard decide. People can review or override with a written reason. The AI assistant only drafts and explains.
+          <div className="mt-6 mx-3 text-[11px] text-muted-foreground leading-relaxed">
+            Rules and the scorecard make every decision. The AI assistant drafts and explains; it cannot approve or decline.
           </div>
         </aside>
-        <main className="flex-1 min-w-0 pb-10 pt-2 max-w-[1400px]">{page}</main>
+        <main className="flex-1 min-w-0 px-4 md:px-6 py-6 max-w-[1400px]">{page}</main>
       </div>
     </div>
   );

@@ -37,7 +37,6 @@ export function ScoreGauge({ score, sc }: { score: number; sc: Scorecard }) {
       </div>
       <div className="flex justify-between text-[10px] text-muted-foreground mt-6 tabular-nums">
         <span>{lo}</span>
-        <span>Bands: A ≥ {sc.bandFloors.A} · B ≥ {sc.bandFloors.B} · C ≥ {sc.bandFloors.C} · D ≥ {sc.bandFloors.D}</span>
         <span>{hi}</span>
       </div>
     </div>
