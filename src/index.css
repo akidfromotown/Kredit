@@ -3,87 +3,177 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Kredit design tokens. All colors HSL. */
+/* Kredit design tokens. All colors HSL.
+   Layout concept: content floats on translucent glass panels over a soft, slowly drifting colour field,
+   so depth and grouping come from the material rather than from borders. */
 @layer base {
   :root {
-    --background: 220 10% 94%;
-    --foreground: 0 0% 9%;
+    --background: 222 30% 95%;
+    --foreground: 224 25% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --primary: 220 10% 20%;
+    --card-foreground: 224 25% 12%;
+    --primary: 224 25% 14%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 5% 90%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 220 5% 88%;
-    --muted-foreground: 220 5% 45%;
-    --border: 220 6% 86%;
-    --input: 220 5% 88%;
-    --ring: 220 10% 20%;
-    --radius: 1rem;
-    --glass-tint: 0 0% 100%;
-    --glass-tint-strong: 0.75;
-    --glass-tint-soft: 0.45;
-    --glass-edge: 0 0% 9%;
-    --glass-edge-opacity: 0.08;
-    --glass-shade: 220 10% 20%;
-    --glass-shade-opacity: 0.1;
-    --gain: 160 60% 34%;
-    --loss: 0 65% 48%;
-    --warn: 35 85% 42%;
-    --chart-1: 220 10% 35%;
-    --chart-2: 160 45% 40%;
-    --chart-3: 0 50% 55%;
-    --chart-4: 200 25% 50%;
-    --chart-5: 40 55% 50%;
+    --secondary: 222 20% 92%;
+    --secondary-foreground: 224 25% 14%;
+    --muted: 222 20% 90%;
+    --muted-foreground: 222 10% 42%;
+    --accent: 214 88% 52%;
+    --accent-foreground: 0 0% 100%;
+    --border: 222 20% 82%;
+    --input: 222 20% 86%;
+    --ring: 214 88% 52%;
+    --radius: 1.25rem;
+
+    /* glass material */
+    --glass-fill: 0 0% 100% / 0.58;
+    --glass-fill-strong: 0 0% 100% / 0.78;
+    --glass-edge: 0 0% 100% / 0.75;
+    --glass-highlight: 0 0% 100% / 0.95;
+    --glass-shadow: 224 40% 20% / 0.08;
+    --glass-line: 222 25% 50% / 0.12;
+
+    /* backdrop colour field */
+    --blob-1: 214 90% 72%;
+    --blob-2: 168 60% 70%;
+    --blob-3: 262 70% 80%;
+    --blob-4: 32 90% 82%;
+
+    --gain: 158 64% 32%;
+    --loss: 0 68% 48%;
+    --warn: 32 92% 40%;
+    --chart-1: 214 70% 48%;
+    --chart-2: 158 55% 38%;
+    --chart-3: 0 62% 54%;
+    --chart-4: 196 45% 52%;
+    --chart-5: 38 80% 50%;
   }
   .dark {
-    --background: 220 8% 6%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 95%;
-    --primary: 0 0% 95%;
-    --primary-foreground: 0 0% 5%;
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 58%;
-    --border: 0 0% 100% / 0.1;
-    --input: 0 0% 100% / 0.1;
-    --ring: 0 0% 95%;
-    --glass-tint: 0 0% 100%;
-    --glass-tint-strong: 0.07;
-    --glass-tint-soft: 0.04;
-    --glass-edge: 0 0% 100%;
-    --glass-edge-opacity: 0.12;
-    --glass-shade: 0 0% 0%;
-    --glass-shade-opacity: 0.4;
-    --gain: 160 50% 50%;
-    --loss: 0 65% 62%;
-    --warn: 38 80% 58%;
-    --chart-1: 220 10% 70%;
-    --chart-2: 160 45% 50%;
-    --chart-3: 0 55% 62%;
-    --chart-4: 200 30% 60%;
-    --chart-5: 40 60% 60%;
+    --background: 226 30% 7%;
+    --foreground: 220 20% 94%;
+    --card: 226 25% 12%;
+    --card-foreground: 220 20% 94%;
+    --primary: 220 20% 94%;
+    --primary-foreground: 226 30% 8%;
+    --secondary: 226 20% 16%;
+    --secondary-foreground: 220 20% 94%;
+    --muted: 226 18% 18%;
+    --muted-foreground: 222 12% 64%;
+    --accent: 212 95% 64%;
+    --accent-foreground: 226 30% 8%;
+    --border: 222 20% 100% / 0.1;
+    --input: 222 20% 100% / 0.12;
+    --ring: 212 95% 64%;
+
+    --glass-fill: 226 30% 16% / 0.55;
+    --glass-fill-strong: 226 30% 18% / 0.78;
+    --glass-edge: 0 0% 100% / 0.1;
+    --glass-highlight: 0 0% 100% / 0.16;
+    --glass-shadow: 0 0% 0% / 0.45;
+    --glass-line: 0 0% 100% / 0.08;
+
+    --blob-1: 214 80% 38%;
+    --blob-2: 170 60% 26%;
+    --blob-3: 262 55% 34%;
+    --blob-4: 22 70% 30%;
+
+    --gain: 156 55% 52%;
+    --loss: 0 75% 66%;
+    --warn: 38 90% 60%;
+    --chart-1: 212 90% 66%;
+    --chart-2: 156 50% 50%;
+    --chart-3: 0 70% 64%;
+    --chart-4: 196 50% 60%;
+    --chart-5: 40 85% 62%;
   }
   * { @apply border-border; }
+  /* grid items may shrink below their content; wide tables then scroll inside their card */
+  .grid > * { min-width: 0; }
   body { @apply bg-background text-foreground font-sans antialiased; }
 }
 
 @layer components {
-  .glass-card {
-    background: linear-gradient(135deg,
-      hsl(var(--glass-tint) / var(--glass-tint-strong)) 0%,
-      hsl(var(--glass-tint) / var(--glass-tint-soft)) 100%);
-    backdrop-filter: blur(24px) saturate(1.5);
-    border: 1px solid hsl(var(--glass-edge) / var(--glass-edge-opacity));
-    box-shadow: 0 8px 32px 0 hsl(var(--glass-shade) / var(--glass-shade-opacity)),
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.14);
+  /* Soft colour field behind the glass. Fixed so panels refract it as the page scrolls. */
+  .app-backdrop {
+    position: fixed;
+    inset: -10%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(38% 42% at 12% 18%, hsl(var(--blob-1) / 0.55), transparent 70%),
+      radial-gradient(34% 40% at 88% 12%, hsl(var(--blob-3) / 0.5), transparent 70%),
+      radial-gradient(40% 44% at 78% 82%, hsl(var(--blob-2) / 0.45), transparent 70%),
+      radial-gradient(30% 34% at 22% 88%, hsl(var(--blob-4) / 0.4), transparent 70%),
+      hsl(var(--background));
+    animation: drift 40s ease-in-out infinite alternate;
   }
-  .micro { @apply text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-medium; }
+  @keyframes drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(-2%, 1.5%, 0) scale(1.04); }
+  }
+
+  /* The glass material: translucent fill, blur + saturation, bright top edge, soft lift. */
+  .glass,
+  .glass-card {
+    position: relative;
+    background: hsl(var(--glass-fill));
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid hsl(var(--glass-edge));
+    box-shadow:
+      0 12px 32px -8px hsl(var(--glass-shadow)),
+      0 2px 6px hsl(var(--glass-shadow)),
+      inset 0 1px 0 hsl(var(--glass-highlight));
+  }
+  /* specular sheen across the top-left of each panel */
+  .glass::before,
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(140deg, hsl(0 0% 100% / 0.35) 0%, hsl(0 0% 100% / 0) 32%);
+    mix-blend-mode: soft-light;
+  }
+  .dark .glass::before,
+  .dark .glass-card::before {
+    background: linear-gradient(140deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0) 30%);
+    mix-blend-mode: normal;
+  }
+  .glass-strong { background: hsl(var(--glass-fill-strong)); }
+
+  /* Liquid-glass pill for selected navigation and segmented controls */
+  .glass-pill {
+    background: hsl(var(--glass-fill-strong));
+    border: 1px solid hsl(var(--glass-edge));
+    box-shadow: 0 4px 14px -4px hsl(var(--glass-shadow)), inset 0 1px 0 hsl(var(--glass-highlight));
+  }
+
+  .micro { @apply text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold; }
   .tbl { @apply w-full text-sm; }
-  .tbl th { @apply text-left font-medium text-xs text-muted-foreground px-3 py-2 border-b whitespace-nowrap; }
-  .tbl td { @apply px-3 py-2 border-b whitespace-nowrap tabular-nums; }
-  .tbl tbody tr:hover { @apply bg-muted/40; }
-  .inp { @apply h-9 rounded-xl border bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30; }
+  .tbl th { @apply text-left font-medium text-xs text-muted-foreground px-4 py-2.5 whitespace-nowrap; border-bottom: 1px solid hsl(var(--glass-line)); }
+  .tbl td { @apply px-4 py-2.5 whitespace-nowrap tabular-nums; border-bottom: 1px solid hsl(var(--glass-line)); }
+  .tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl tbody tr { transition: background-color 120ms; }
+  .tbl tbody tr:hover { background: hsl(var(--accent) / 0.06); }
+  .inp {
+    @apply h-9 rounded-xl px-3 text-sm outline-none focus:ring-2 focus:ring-ring/40;
+    background: hsl(var(--glass-fill-strong));
+    border: 1px solid hsl(var(--glass-line));
+  }
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-backdrop { animation: none; }
+}
+
+/* People who ask the OS for less transparency get solid panels. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .glass-card, .glass-pill {
+    background: hsl(var(--card));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }

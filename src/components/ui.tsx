@@ -1,7 +1,9 @@
 // Lightweight UI primitives styled with the Kredit design tokens (glass cards, sentence case, neutral palette).
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useId, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { Info } from "lucide-react";
+import { GLOSSARY, type Term } from "./glossary";
 
 export const cn = (...a: Parameters<typeof clsx>) => twMerge(clsx(...a));
 
@@ -15,14 +17,70 @@ export const dt = (iso: string) => new Date(iso).toLocaleString("en-US", { month
 export const d8 = (iso: string) => new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn("glass-card rounded-3xl", className)}>{children}</div>;
+  return <div className={cn("glass rounded-[24px]", className)}>{children}</div>;
 }
 
-export function CardHead({ title, sub, right }: { title: ReactNode; sub?: ReactNode; right?: ReactNode }) {
+/** Small info button that explains a term in plain language (hover, focus or tap). */
+export function InfoTip({ term, text, align = "center" }: { term?: Term; text?: string; align?: "center" | "left" | "right" }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const body = text ?? (term ? GLOSSARY[term] : "");
   return (
-    <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
+    <span className="relative inline-flex align-middle" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        type="button"
+        aria-label="What does this mean?"
+        aria-describedby={open ? id : undefined}
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        className="ml-1 text-muted-foreground/70 hover:text-accent transition-colors"
+      >
+        <Info className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          id={id}
+          className={cn(
+            "glass glass-strong absolute z-50 top-6 w-64 rounded-2xl p-3 text-xs font-normal normal-case tracking-normal leading-relaxed text-foreground",
+            align === "center" && "left-1/2 -translate-x-1/2",
+            align === "left" && "left-0",
+            align === "right" && "right-0",
+          )}
+        >
+          {body}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Tiny trend line for stat cards. */
+export function Sparkline({ values, tone = "accent" }: { values: number[]; tone?: "accent" | "gain" | "loss" | "warn" }) {
+  const vs = values.filter((v) => Number.isFinite(v));
+  if (vs.length < 2) return null;
+  const w = 160, h = 30;
+  const lo = Math.min(...vs), hi = Math.max(...vs);
+  const span = hi - lo || 1;
+  const pts = vs.map((v, i) => [(i / (vs.length - 1)) * w, h - 3 - ((v - lo) / span) * (h - 6)]);
+  const line = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const color = `hsl(var(--${tone}))`;
+  const [ex, ey] = pts[pts.length - 1];
+  return (
+    <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="overflow-visible block" aria-hidden="true">
+      <polygon points={`0,${h} ${line} ${w},${h}`} fill={color} opacity={0.12} />
+      <polyline points={line} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={ex} cy={ey} r={2.5} fill={color} vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+export function CardHead({ title, sub, right, term }: { title: ReactNode; sub?: ReactNode; right?: ReactNode; term?: Term }) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 pb-3">
       <div className="min-w-0">
-        <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-base font-semibold tracking-tight flex items-center">{title}{term && <InfoTip term={term} align="left" />}</h3>
         {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </div>
       {right}
@@ -30,12 +88,21 @@ export function CardHead({ title, sub, right }: { title: ReactNode; sub?: ReactN
   );
 }
 
-export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: "gain" | "loss" | "warn" }) {
+export function Stat({ label, value, sub, tone, term, spark, sparkTone, delta }: {
+  label: string; value: ReactNode; sub?: ReactNode; tone?: "gain" | "loss" | "warn"; term?: Term;
+  spark?: number[]; sparkTone?: "accent" | "gain" | "loss" | "warn";
+  /** Change vs. the previous period; `good` colours it. */
+  delta?: { text: string; good: boolean | null };
+}) {
   return (
-    <Card className="p-4">
-      <div className="micro">{label}</div>
-      <div className={cn("text-[21px] font-bold tracking-tight mt-1 tabular-nums", tone === "gain" && "text-gain", tone === "loss" && "text-loss", tone === "warn" && "text-warn")}>{value}</div>
-      {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
+    <Card className="p-4 flex flex-col">
+      <div className="micro flex items-center">{label}{term && <InfoTip term={term} align="left" />}</div>
+      <div className={cn("text-[22px] font-bold tracking-tight tabular-nums leading-none mt-1.5", tone === "gain" && "text-gain", tone === "loss" && "text-loss", tone === "warn" && "text-warn")}>{value}</div>
+      {spark && <div className="mt-2.5 -mx-0.5"><Sparkline values={spark} tone={sparkTone} /></div>}
+      {delta && (
+        <div className={cn("text-[11px] font-semibold mt-2", delta.good === true && "text-gain", delta.good === false && "text-loss", delta.good === null && "text-muted-foreground")}>{delta.text}</div>
+      )}
+      {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
     </Card>
   );
 }
@@ -73,7 +140,7 @@ export function Button({ variant = "primary", className, ...p }: ButtonHTMLAttri
       className={cn(
         "inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none",
         variant === "primary" && "bg-primary text-primary-foreground hover:opacity-90",
-        variant === "outline" && "border bg-card hover:bg-muted",
+        variant === "outline" && "glass-pill hover:brightness-105",
         variant === "ghost" && "hover:bg-muted",
         variant === "danger" && "bg-loss text-white hover:opacity-90",
         className,
@@ -84,9 +151,9 @@ export function Button({ variant = "primary", className, ...p }: ButtonHTMLAttri
 
 export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: T; label: ReactNode }[]; value: T; onChange: (t: T) => void }) {
   return (
-    <div className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1 w-fit max-w-full">
+    <div className="glass flex gap-1 overflow-x-auto rounded-2xl p-1 w-fit max-w-full">
       {tabs.map((t) => (
-        <button key={t.id} onClick={() => onChange(t.id)} className={cn("px-3 h-8 rounded-xl text-sm whitespace-nowrap transition-colors", value === t.id ? "bg-card shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
+        <button key={t.id} onClick={() => onChange(t.id)} className={cn("px-3 h-8 rounded-xl text-sm whitespace-nowrap transition-all", value === t.id ? "glass-pill font-medium" : "text-muted-foreground hover:text-foreground")}>
           {t.label}
         </button>
       ))}
@@ -151,11 +218,11 @@ export const chartColors = {
   c3: "hsl(var(--chart-3))",
   c4: "hsl(var(--chart-4))",
   c5: "hsl(var(--chart-5))",
-  grid: "hsl(var(--border))",
+  grid: "hsl(var(--glass-line))",
   axis: "hsl(var(--muted-foreground))",
 };
 
 export const tooltipStyle = {
-  contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12, color: "hsl(var(--foreground))" },
+  contentStyle: { background: "hsl(var(--glass-fill-strong))", backdropFilter: "blur(20px) saturate(180%)", border: "1px solid hsl(var(--glass-edge))", borderRadius: 14, fontSize: 12, color: "hsl(var(--foreground))", boxShadow: "0 10px 30px -8px hsl(var(--glass-shadow))" },
   labelStyle: { color: "hsl(var(--muted-foreground))" },
 };
