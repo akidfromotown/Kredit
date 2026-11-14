@@ -7,7 +7,7 @@ import { ATTRIBUTE_META, attrMeta, formatAttr } from "../engine/attributes";
 import { AI_TASK_LABEL, draftCreditMemo, explainDecline, screenDocuments, type AiOutput, type AiTask } from "../engine/assistant";
 import { industryByName, simulateAccount } from "../engine/data";
 import { monthLabel } from "../engine/dates";
-import { HUMAN_DECLINE_REASONS, constraintLabel, finalStatus, offerAtAmount, type Decision, type Reason } from "../engine/decision";
+import { HUMAN_DECLINE_REASONS, constraintLabel, finalStatus, type Decision, type Reason } from "../engine/decision";
 import type { CreditPolicy } from "../engine/policy";
 import type { Business, TxnCategory } from "../engine/types";
 import {
@@ -198,6 +198,8 @@ function HumanActions({ b, d, policy }: { b: Business; d: Decision; policy: Cred
   const [codes, setCodes] = useState<string[]>([]);
   const maxAmount = d.offer?.amount || d.inputs.application.requestedAmount;
   const [amount, setAmount] = useState(Math.min(maxAmount, d.inputs.application.requestedAmount));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
   if (d.human) return null;
   const kycFail = d.kycOutcome === "fail";
@@ -206,13 +208,17 @@ function HumanActions({ b, d, policy }: { b: Business; d: Decision; policy: Cred
   const canDecline = pending || d.engineOutcome === "APPROVE";
   const valid = note.trim().length >= 10 && (mode === "APPROVE" ? amount >= policy.pricing.minLoan && amount <= maxAmount : codes.length > 0);
 
-  const submit = () => {
+  const submit = async () => {
     if (mode === "none") return;
-    recordHuman(b.id, {
-      kind, action: mode, note: note.trim(),
-      reasons: mode === "DECLINE" ? HUMAN_DECLINE_REASONS.filter((r) => codes.includes(r.code)) : [],
-      offer: mode === "APPROVE" ? offerAtAmount(policy, d, amount) : undefined,
-    });
+    setBusy(true);
+    setErr("");
+    try {
+      await recordHuman(b.id, { action: mode, note: note.trim(), reasonCodes: codes, amount });
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -249,7 +255,8 @@ function HumanActions({ b, d, policy }: { b: Business; d: Decision; policy: Cred
             <Field label="Justification (required, min 10 characters)">
               <textarea className="inp w-full h-20 py-2" value={note} onChange={(e) => setNote(e.target.value)} placeholder="What did you verify? Which mitigants or concerns drove the decision?" />
             </Field>
-            <Button disabled={!valid} onClick={submit} variant={mode === "DECLINE" ? "danger" : "primary"}>Record {kind}</Button>
+            <Button disabled={!valid || busy} onClick={submit} variant={mode === "DECLINE" ? "danger" : "primary"}>{busy ? "Saving…" : `Record ${kind}`}</Button>
+            {err && <p className="text-xs text-loss">{err}</p>}
           </>
         )}
       </div>
@@ -367,7 +374,7 @@ function AssistantTab({ b, d }: { b: Business; d: Decision }) {
   const run = (task: AiTask) => {
     const o = task === "screen_documents" ? screenDocuments(b, d) : task === "credit_memo" ? draftCreditMemo(b, d) : explainDecline(b, d);
     setOut(o);
-    logAi(d.id, o);
+    logAi(task, b.id, o);
   };
   return (
     <div className="grid lg:grid-cols-3 gap-4">

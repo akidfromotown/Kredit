@@ -39,7 +39,7 @@ export default function MonitoringPage() {
           right={
             <div className="flex gap-2 items-center">
               <Tabs value={sev} onChange={setSev} tabs={[{ id: "all", label: "All" }, { id: "high", label: "High" }, { id: "medium", label: "Medium" }, { id: "low", label: "Low" }]} />
-              <Button variant="outline" onClick={() => { const o = summarizeWarnings(loans, triggers); setAi(o); logAi("monitoring", o); }}><Bot className="h-4 w-4" />Summarize</Button>
+              <Button variant="outline" onClick={() => { const o = summarizeWarnings(loans, triggers); setAi(o); logAi("summarize_warnings", undefined, o); }}><Bot className="h-4 w-4" />Summarize</Button>
             </div>
           }
         />

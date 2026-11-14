@@ -50,7 +50,7 @@ function useTheme() {
 
 export default function App() {
   const route = useRoute();
-  const { world } = useStore();
+  const { world, mode } = useStore();
   const [dark, setDark] = useTheme();
   const pending = Object.values(world.decisions).filter((d) => d.engineOutcome === "REVIEW" && !d.human).length;
   const section = route[0];
@@ -78,6 +78,9 @@ export default function App() {
           <a href="#portfolio" className="font-semibold tracking-tight text-lg">Kredit™</a>
           <span className="hidden sm:inline text-xs text-muted-foreground">Credit risk platform</span>
           <div className="ml-auto flex items-center gap-3">
+            <span title={mode === "backend" ? "Reading from Supabase; writes go through the kredit-api function" : "No backend configured; data lives in this browser"} className={cn("hidden sm:inline-flex items-center gap-1.5 text-[11px] rounded-full px-2 py-0.5", mode === "backend" ? "bg-gain/15 text-gain" : "bg-secondary text-muted-foreground")}>
+              <span className={cn("h-1.5 w-1.5 rounded-full", mode === "backend" ? "bg-gain" : "bg-muted-foreground")} />{mode === "backend" ? "Live database" : "Local demo"}
+            </span>
             <span className="text-xs text-muted-foreground"><Gauge className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />As of {d8(AS_OF)}</span>
             <button aria-label="Toggle theme" onClick={() => setDark(!dark)} className="h-8 w-8 grid place-items-center rounded-xl hover:bg-muted">
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

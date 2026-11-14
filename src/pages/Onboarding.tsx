@@ -31,11 +31,19 @@ export default function OnboardingPage() {
     return () => clearInterval(t);
   }, [step]);
 
-  const submit = () => {
-    const id = `BIZ-N${Date.now().toString().slice(-6)}`;
-    const d = onboard({ id, ...f, appliedOn: new Date().toISOString().slice(0, 10) });
-    setDecision(d);
-    setStep(3);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = async () => {
+    setBusy(true);
+    setErr("");
+    try {
+      setDecision(await onboard({ ...f }));
+      setStep(3);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const steps = ["Business (KYB)", "Owner (KYC)", "Verify & connect bank", "Decision"];
@@ -110,8 +118,9 @@ export default function OnboardingPage() {
           </div>
           <div className="px-5 pb-5 flex gap-2">
             <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-            <Button onClick={submit} disabled={checking <= preview.length}><Landmark className="h-4 w-4" />Submit for decision</Button>
+            <Button onClick={submit} disabled={checking <= preview.length || busy}><Landmark className="h-4 w-4" />{busy ? "Deciding…" : "Submit for decision"}</Button>
           </div>
+          {err && <p className="px-5 pb-5 -mt-2 text-sm text-loss">{err}</p>}
         </Card>
       )}
 

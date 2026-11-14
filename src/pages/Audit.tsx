@@ -1,8 +1,8 @@
 // Module 12: audit log.
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Copy, ShieldCheck, ShieldX } from "lucide-react";
 import { useStore } from "../store";
-import { verifyChain, type AuditEntry, type AuditType } from "../engine/audit";
+import type { AuditEntry, AuditType } from "../engine/audit";
 import { Button, Card, Empty, PageHeader, Pill, Stat, TableWrap, dt, type Tone } from "../components/ui";
 
 const TYPE_TONE: Record<AuditType, Tone> = {
@@ -52,10 +52,15 @@ export function AuditList({ filter, limit = 200 }: { filter?: (e: AuditEntry) =>
 }
 
 export default function AuditPage() {
-  const { world, reset, userActionCount } = useStore();
+  const { world, reset, userActionCount, verifyAudit, mode } = useStore();
   const [type, setType] = useState<"all" | AuditType>("all");
   const [actor, setActor] = useState<"all" | "system" | "human" | "ai">("all");
-  const chain = useMemo(() => verifyChain(world.audit), [world.audit.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [chain, setChain] = useState<{ ok: boolean; entries: number; brokenAt?: number } | null>(null);
+  useEffect(() => {
+    let live = true;
+    verifyAudit().then((r) => live && setChain(r), () => live && setChain(null));
+    return () => { live = false; };
+  }, [world.audit.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const filter = useMemo(() => (e: AuditEntry) => (type === "all" || e.type === type) && (actor === "all" || e.actorType === actor), [type, actor]);
   const count = (t: AuditType) => world.audit.filter((e) => e.type === t).length;
 
@@ -75,8 +80,11 @@ export default function AuditPage() {
       />
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <Card className="p-4 flex items-center gap-3">
-          {chain.ok ? <ShieldCheck className="h-7 w-7 text-gain" /> : <ShieldX className="h-7 w-7 text-loss" />}
-          <div><div className="micro">Hash chain</div><div className="font-semibold">{chain.ok ? `Intact · ${world.audit.length.toLocaleString()} entries` : `Broken at #${chain.brokenAt}`}</div></div>
+          {!chain || chain.ok ? <ShieldCheck className={`h-7 w-7 ${chain ? "text-gain" : "text-muted-foreground"}`} /> : <ShieldX className="h-7 w-7 text-loss" />}
+          <div>
+            <div className="micro">{mode === "backend" ? "SHA-256 chain (database)" : "Hash chain"}</div>
+            <div className="font-semibold">{!chain ? "Checking…" : chain.ok ? `Intact · ${chain.entries.toLocaleString()} entries` : `Broken at #${chain.brokenAt}`}</div>
+          </div>
         </Card>
         <Stat label="Decisions" value={count("DECISION")} />
         <Stat label="Reviews resolved" value={count("REVIEW_RESOLVED")} />
@@ -91,8 +99,8 @@ export default function AuditPage() {
         <select className="inp" value={actor} onChange={(e) => setActor(e.target.value as typeof actor)}>
           <option value="all">All actors</option><option value="system">System</option><option value="human">Human</option><option value="ai">AI</option>
         </select>
-        <span className="ml-auto text-xs text-muted-foreground">{userActionCount} action(s) by you in this browser.</span>
-        {userActionCount > 0 && !confirmReset && <Button variant="ghost" onClick={() => setConfirmReset(true)}>Reset demo</Button>}
+        <span className="ml-auto text-xs text-muted-foreground">{mode === "backend" ? "Stored in the shared database; reset with the seed script." : `${userActionCount} action(s) by you in this browser.`}</span>
+        {mode === "local" && userActionCount > 0 && !confirmReset && <Button variant="ghost" onClick={() => setConfirmReset(true)}>Reset demo</Button>}
         {confirmReset && (
           <span className="flex items-center gap-2 text-xs">
             Clear your policy versions, reviews, overrides, onboarded applicants and AI entries?

@@ -32,16 +32,21 @@ export default function PolicyPage() {
   const changes = useMemo(() => policyDiff(policy, draft), [policy, draft]);
   const mutate = (fn: (p: CreditPolicy) => void) => { const p = clonePolicy(draft); fn(p); setDraft(p); };
 
-  const publish = () => {
-    const p = clonePolicy(draft);
-    p.version = nextVersion(policy.version);
-    p.publishedAt = new Date().toISOString();
-    p.publishedBy = "you (demo credit officer)";
-    p.note = note.trim();
-    publishPolicy(p);
-    setDraft(clonePolicy(p));
-    setNote("");
-    setTab("history");
+  const [publishErr, setPublishErr] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const publish = async () => {
+    setPublishing(true);
+    setPublishErr("");
+    try {
+      const p = await publishPolicy(draft, note);
+      setDraft(clonePolicy(p));
+      setNote("");
+      setTab("history");
+    } catch (e) {
+      setPublishErr((e as Error).message);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   return (
@@ -90,7 +95,7 @@ export default function PolicyPage() {
 
       {tab === "scorecard" && <ScorecardEditor draft={draft} mutate={mutate} />}
       {tab === "pricing" && <PricingEditor draft={draft} mutate={mutate} />}
-      {tab === "impact" && <Impact active={policy} draft={draft} changes={changes} note={note} setNote={setNote} onPublish={publish} worldSize={world.businesses.length} />}
+      {tab === "impact" && <Impact active={policy} draft={draft} changes={changes} note={note} setNote={setNote} onPublish={publish} worldSize={world.businesses.length} busy={publishing} error={publishErr} />}
       {tab === "history" && <Versions />}
     </div>
   );
@@ -202,8 +207,8 @@ function summarize(ds: Decision[], badById: Map<string, boolean>): Summary {
   };
 }
 
-function Impact({ active, draft, changes, note, setNote, onPublish, worldSize }: {
-  active: CreditPolicy; draft: CreditPolicy; changes: ReturnType<typeof policyDiff>; note: string; setNote: (s: string) => void; onPublish: () => void; worldSize: number;
+function Impact({ active, draft, changes, note, setNote, onPublish, worldSize, busy, error }: {
+  active: CreditPolicy; draft: CreditPolicy; changes: ReturnType<typeof policyDiff>; note: string; setNote: (s: string) => void; onPublish: () => void; worldSize: number; busy: boolean; error: string;
 }) {
   const { world } = useStore();
   const [ran, setRan] = useState<null | { a: Summary; b: Summary; moved: { name: string; id: string; from: string; to: string }[] }>(null);
@@ -269,7 +274,8 @@ function Impact({ active, draft, changes, note, setNote, onPublish, worldSize }:
             </div>
           )}
           <Field label="Change note (required)"><textarea className="inp w-full h-20 py-2" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why is this change being made? Reference the committee approval." /></Field>
-          <Button disabled={!changes.length || note.trim().length < 5 || invalid} onClick={onPublish}>Publish {nextVersion(active.version)}</Button>
+          <Button disabled={!changes.length || note.trim().length < 5 || invalid || busy} onClick={onPublish}>{busy ? "Publishing…" : `Publish ${nextVersion(active.version)}`}</Button>
+          {error && <p className="text-xs text-loss">{error}</p>}
         </div>
       </Card>
     </div>

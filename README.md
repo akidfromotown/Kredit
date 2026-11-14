@@ -2,14 +2,54 @@
 
 A demo credit risk system for a **fictional US small-business lender**. It shows how a fintech runs lending in-house end to end: onboarding, underwriting, decisioning, monitoring, collections and audit. **Synthetic data only. No real customers, no real lending.**
 
-Built with Vite, React, TypeScript, Tailwind and Recharts. Everything runs in the browser. No backend is needed for the demo.
+Built with Vite, React, TypeScript, Tailwind and Recharts, with an optional Supabase backend.
 
 ```sh
 npm install
 npm run dev            # local dev server
 npm test               # engine tests (governance rules, guardrails, audit chain)
+npm run test:db        # schema + server tests against a local Postgres (see below)
 npm run build:single   # one self-contained HTML file in dist-single/
 ```
+
+## Two modes
+
+- **Local demo** (no configuration): the 500-business book is generated in the browser and your actions are saved in that browser only.
+- **Backend** (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set): data lives in Supabase and everyone sees the same decisions and audit log. The browser can only read. Every write goes to the `kredit-api` Edge Function, which runs the decision engine server-side and validates every action. The header shows **Live database** or **Local demo**.
+
+### Backend architecture
+
+| Piece | Where | What it does |
+|---|---|---|
+| Schema | `supabase/migrations/` | `policies`, `businesses`, `decisions`, `audit_log`. RLS: public read, no direct writes. |
+| Audit chain | database triggers | SHA-256 hash chain computed by Postgres on insert. Updates, deletes and truncates are rejected, even for the service role. `kredit_verify_audit()` re-checks the whole chain. |
+| Decision immutability | database trigger | Engine fields can never change; one human action (review or override) can be added, once. Declines without reasons are rejected by check constraints. |
+| Write functions | `kredit_record_application`, `kredit_record_human`, `kredit_publish_policy`, `kredit_append_audit` | Atomic writes (record + audit entries in one transaction). Executable by the service role only. |
+| API | `supabase/functions/kredit-api` | Onboard, review/override, publish policy, AI drafts. Server assigns IDs, timestamps, policy versions and offer terms; never trusts them from the browser. |
+| Shared logic | `src/engine`, `src/server` | Same engine and validation in browser, server and seed script. `npm run build:server` bundles it for Deno into `supabase/functions/_shared/kredit-server.js`. |
+
+### Deploying to Supabase
+
+1. Create a Supabase project. From **Project Settings → API** note the project URL, the `anon` key and the `service_role` key.
+2. Link and push the schema, then deploy the function:
+   ```sh
+   npx supabase login
+   npx supabase link --project-ref YOUR-PROJECT-REF
+   npx supabase db push
+   npm run build:server
+   npx supabase functions deploy kredit-api
+   ```
+3. Seed the demo book (wipes and reloads the demo tables):
+   ```sh
+   SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co SUPABASE_SERVICE_ROLE_KEY=... npm run seed
+   ```
+4. Copy `.env.example` to `.env.local`, fill in the URL and anon key, and run `npm run dev`.
+
+Never put the service role key in `.env.local` or anywhere the browser can see it.
+
+### Testing the database locally
+
+`npm run test:db` expects Postgres at `postgres://kredit_tester:kredit@localhost:5432/kredit_test` with the Supabase roles (`anon`, `authenticated`, `service_role`) and the migration applied. It seeds the full book and checks permissions, the append-only log, tamper detection and every server rule.
 
 ## Governance rules (enforced in code and tests)
 
@@ -45,4 +85,4 @@ npm run build:single   # one self-contained HTML file in dist-single/
 
 ## Not production
 
-The demo has no real KYC vendors, bureau or bank aggregator, and no real LLM. The audit hash is non-cryptographic, and there is no auth or server-side persistence. The natural next step is to move `src/engine` behind Supabase (tables + edge functions).
+The demo has no real KYC vendors, bureau or bank aggregator, and no real LLM. In local mode the audit hash is a fast non-cryptographic demo hash; in backend mode it is SHA-256 in Postgres. There is no user login yet: every write is attributed to a single demo credit officer, so adding Supabase Auth and role-based permissions (analyst, senior analyst, policy committee) is the next step.

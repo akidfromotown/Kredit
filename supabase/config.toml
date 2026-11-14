@@ -1,0 +1,5 @@
+project_id = "kredit"
+
+[functions.kredit-api]
+# Callers must send the project anon key (supabase-js does this automatically).
+verify_jwt = true

@@ -70,7 +70,8 @@ export interface CreditPolicy {
   affordability: Affordability;
 }
 
-const NEG = -Infinity;
+/** Lower bound of the first bin. Finite so policies round-trip through JSON and Postgres jsonb. */
+const NEG = -1e15;
 
 export const DEFAULT_POLICY: CreditPolicy = {
   version: "POL-1.0",
@@ -210,4 +211,11 @@ export function clonePolicy(p: CreditPolicy): CreditPolicy {
 export function nextVersion(v: string): string {
   const [maj, min] = v.replace("POL-", "").split(".").map(Number);
   return `POL-${maj}.${min + 1}`;
+}
+
+/** Content fingerprint of a policy, ignoring its version metadata. */
+export function policyKey(p: CreditPolicy): string {
+  const { version: _v, publishedAt: _a, publishedBy: _b, note: _n, ...rest } = p;
+  void _v; void _a; void _b; void _n;
+  return JSON.stringify(rest);
 }
