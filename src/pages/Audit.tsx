@@ -7,7 +7,7 @@ import { Button, Card, Empty, PageHeader, Pill, Stat, TableWrap, dt, type Tone }
 
 const TYPE_TONE: Record<AuditType, Tone> = {
   APPLICATION_SUBMITTED: "neutral", KYC_COMPLETED: "neutral", DECISION: "solid", REVIEW_RESOLVED: "warn", OVERRIDE: "loss",
-  POLICY_PUBLISHED: "gain", AI_OUTPUT: "outline", DEMO_RESET: "outline",
+  POLICY_PUBLISHED: "gain", AI_OUTPUT: "outline", FINCRIME_DISPOSITION: "warn", DEMO_RESET: "outline",
 };
 
 export function AuditList({ filter, limit = 200 }: { filter?: (e: AuditEntry) => boolean; limit?: number }) {

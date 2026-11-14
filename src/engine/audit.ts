@@ -10,6 +10,7 @@ export type AuditType =
   | "OVERRIDE"
   | "POLICY_PUBLISHED"
   | "AI_OUTPUT"
+  | "FINCRIME_DISPOSITION"
   | "DEMO_RESET";
 
 export interface AuditEntry {

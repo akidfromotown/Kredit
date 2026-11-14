@@ -8,13 +8,15 @@ import { HUMAN_DECLINE_REASONS, decide, finalStatus, offerAtAmount, type Decisio
 import { kycOutcome } from "./kyc";
 import { DEFAULT_POLICY, nextVersion, policyKey, type CreditPolicy } from "./policy";
 import { Rng } from "./rng";
+import { ACTION_LABEL, isClosed, type AlertStatus, type Disposition, type DispositionAction, type FinCrimeAlert } from "./fincrime";
 import type { Business } from "./types";
 
 export type UserAction =
   | { t: "publish"; at: string; by: string; policy: CreditPolicy }
   | { t: "human"; at: string; businessId: string; human: HumanAction }
   | { t: "onboard"; at: string; input: NewBusinessInput }
-  | { t: "ai"; at: string; ref: string; output: Pick<AiOutput, "task" | "title" | "body"> };
+  | { t: "ai"; at: string; ref: string; output: Pick<AiOutput, "task" | "title" | "body"> }
+  | { t: "fincrime"; at: string; disposition: Disposition; alert: Pick<FinCrimeAlert, "id" | "businessId" | "businessName" | "title"> };
 
 export interface World {
   businesses: Business[];
@@ -72,7 +74,26 @@ export function aiAudit(ref: string, out: Pick<AiOutput, "task" | "title" | "bod
   return { at, actor: "kredit assistant (demo)", actorType: "ai", type: "AI_OUTPUT", ref, summary: `${out.title} (advisory only)`, payload: { task: out.task, title: out.title, body: out.body } };
 }
 
+export function fincrimeAudit(d: Disposition, alert: Pick<FinCrimeAlert, "id" | "businessId" | "businessName" | "title">): AuditInput {
+  return {
+    at: d.at, actor: d.by, actorType: "human", type: "FINCRIME_DISPOSITION", ref: alert.id,
+    summary: `${alert.businessName}: ${alert.title} · ${ACTION_LABEL[d.action].toLowerCase()}`,
+    payload: { ...d, businessId: alert.businessId },
+  };
+}
+
 // ---------------------------------------------------------------- validation (server and client)
+
+export function validateDisposition(alert: FinCrimeAlert | undefined, status: AlertStatus, input: { action: DispositionAction; note: string }, by: string, at: string): Disposition {
+  if (!alert) throw new ValidationError("Alert not found.");
+  if (isClosed(status)) throw new ValidationError("This alert is already closed.");
+  if (!["clear", "escalate", "refer"].includes(input.action)) throw new ValidationError("Unknown action.");
+  if (input.action === "escalate" && status === "escalated") throw new ValidationError("Already escalated.");
+  const note = (input.note ?? "").trim();
+  if (note.length < 10) throw new ValidationError("A note of at least 10 characters is required.");
+  return { alertId: alert.id, action: input.action, note, by, at };
+}
+
 
 export class ValidationError extends Error {}
 
@@ -205,6 +226,9 @@ export function applyAction(w: World, a: UserAction) {
     }
     case "ai":
       appendAudit(w.audit, aiAudit(a.ref, a.output, a.at));
+      break;
+    case "fincrime":
+      appendAudit(w.audit, fincrimeAudit(a.disposition, a.alert));
       break;
   }
 }

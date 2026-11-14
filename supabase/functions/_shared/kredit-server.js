@@ -1035,6 +1035,123 @@ function accountTriggers(loan, b) {
 }
 var ROLL_TO = [...BUCKETS];
 
+// src/engine/fincrime.ts
+var LIST_LABEL = { sanctions: "Sanctions", pep: "PEP", adverse_media: "Adverse media" };
+var OUTLETS = ["Metro Business Journal", "Valley Courier", "State Capitol Report", "Harborview Times", "County Ledger"];
+var MEDIA = [
+  { category: "Fraud", serious: true, text: (n) => `${n} named in state investigation into invoice fraud` },
+  { category: "Money laundering", serious: true, text: (n) => `Prosecutors cite ${n} in cash-structuring case` },
+  { category: "Tax", serious: true, text: (n) => `${n} charged over unpaid payroll taxes` },
+  { category: "Litigation", serious: false, text: (n) => `${n} sued by former supplier over unpaid invoices` },
+  { category: "Regulatory", serious: false, text: (n) => `Licensing board fines ${n} for permit violations` },
+  { category: "Labour", serious: false, text: (n) => `Former employees allege wage violations at ${n}` }
+];
+function demoScreen(subjects) {
+  const hits = [];
+  for (const s of subjects) {
+    const rng = new Rng(`screen:${s.businessId}:${s.kind}`);
+    const date = (monthsBack) => {
+      const m = addMonths(AS_OF_MONTH, -monthsBack);
+      return isoDate(m, rng.int(1, daysInMonth(m)));
+    };
+    const add = (list, matchScore, matchedName, category, headline, source, monthsBack) => hits.push({ id: `SCR-${s.businessId}-${s.kind[0]}-${list}`, providerId: "demo", list, subject: s, matchScore, matchedName, category, headline, source, publishedOn: date(monthsBack) });
+    if (rng.chance(s.kind === "business" ? 0.05 : 0.03)) {
+      const m = rng.pick(MEDIA);
+      const strong = rng.chance(m.serious ? 0.45 : 0.7);
+      const name = strong ? s.name : `${s.name.split(" ")[0]} ${rng.pick(["Holdings", "Group", "Partners"])}`;
+      add("adverse_media", strong ? rng.int(86, 98) : rng.int(58, 74), name, m.category, m.text(name), rng.pick(OUTLETS), rng.int(0, 5));
+    }
+    if (s.kind === "person" && rng.chance(0.015)) {
+      add("pep", rng.int(62, 90), s.name, "Domestic PEP", `Name matches a county commissioner in ${rng.pick(["TX", "FL", "OH", "GA"])}`, "Public officials register (demo)", rng.int(0, 2));
+    }
+    if (rng.chance(3e-3)) {
+      const near = `${s.name.split(" ")[0]} ${rng.pick(["Trading", "International", "Export"])} ${rng.pick(["LLC", "FZE", "Ltd"])}`;
+      add("sanctions", rng.int(70, 84), near, "Near match", `Partial name match to a listed entity: ${near}`, "Consolidated sanctions list (demo)", 0);
+    }
+  }
+  return hits;
+}
+var subjectsFor = (b) => [
+  { businessId: b.id, kind: "business", name: b.name, country: "US" },
+  { businessId: b.id, kind: "person", name: b.owner.name, country: "US" }
+];
+var usd2 = (v) => `${v < 0 ? "-" : ""}$${Math.abs(Math.round(v)).toLocaleString("en-US")}`;
+var TM_RULES = [
+  {
+    id: "TM-SPIKE",
+    name: "Deposit spike",
+    test: (b, i) => {
+      const m = b.months[i];
+      const prior = b.months.slice(Math.max(0, i - 6), i);
+      if (prior.length < 4) return null;
+      const avg = prior.reduce((s, x) => s + x.revenue, 0) / prior.length;
+      return m.revenue > 1.7 * avg && m.revenue - avg > 15e3 ? `Deposits of ${usd2(m.revenue)} are ${(m.revenue / avg).toFixed(1)}\xD7 the prior ${prior.length}-month average.` : null;
+    }
+  },
+  {
+    id: "TM-INJECT",
+    name: "Large owner injection",
+    test: (b, i) => {
+      const m = b.months[i];
+      return m.ownerContributions > 1e4 && m.ownerContributions > 0.4 * m.revenue ? `Owner put in ${usd2(m.ownerContributions)}, ${Math.round(m.ownerContributions / Math.max(m.revenue, 1) * 100)}% of the month's sales.` : null;
+    }
+  },
+  {
+    id: "TM-PASSTHRU",
+    name: "Funds passing through",
+    test: (b, i) => {
+      if (i < 2) return null;
+      const w = b.months.slice(i - 2, i + 1);
+      return w.every((m) => m.revenue > 3e4 && m.avgBalance < 0.03 * m.revenue) ? `Average balance under 3% of deposits for three months running (${usd2(w[2].revenue)} in, ${usd2(w[2].avgBalance)} average balance).` : null;
+    }
+  }
+];
+var ACTION_LABEL = { clear: "Clear (false positive)", escalate: "Escalate", refer: "Refer for SAR (demo)" };
+var MONITORING_WINDOW_MONTHS = 3;
+function buildAlerts(businesses) {
+  const out = [];
+  const byId = new Map(businesses.map((b) => [b.id, b]));
+  for (const h of demoScreen(businesses.flatMap(subjectsFor))) {
+    const b = byId.get(h.subject.businessId);
+    const serious = h.list === "sanctions" || ["Fraud", "Money laundering", "Tax"].includes(h.category);
+    out.push({
+      id: `FC-${h.id.slice(4)}`,
+      businessId: b.id,
+      businessName: b.name,
+      source: "screening",
+      type: LIST_LABEL[h.list],
+      severity: serious && h.matchScore >= 80 ? "high" : h.matchScore >= 75 || serious ? "medium" : "low",
+      title: `${LIST_LABEL[h.list]} \xB7 ${h.category}`,
+      detail: `${h.headline} \xB7 ${h.source} \xB7 ${h.matchScore}% match`,
+      raisedOn: h.publishedOn,
+      hit: h
+    });
+  }
+  for (const b of businesses) {
+    b.months.forEach((m, i) => {
+      if (monthDiff(m.month, AS_OF_MONTH) >= MONITORING_WINDOW_MONTHS) return;
+      for (const r of TM_RULES) {
+        const d = r.test(b, i);
+        if (d) out.push({ id: `FC-${b.id}-${r.id}-${m.month}`, businessId: b.id, businessName: b.name, source: "monitoring", type: r.name, severity: r.id === "TM-PASSTHRU" ? "high" : "medium", title: r.name, detail: d, raisedOn: isoDate(m.month, daysInMonth(m.month)) });
+      }
+    });
+  }
+  return out.sort((a, b) => b.raisedOn.localeCompare(a.raisedOn));
+}
+function alertStatuses(audit) {
+  const map = /* @__PURE__ */ new Map();
+  for (const e of audit) {
+    if (e.type !== "FINCRIME_DISPOSITION") continue;
+    const d = e.payload;
+    const cur = map.get(d.alertId) ?? { status: "open", history: [] };
+    cur.history.push(d);
+    cur.status = d.action === "clear" ? "cleared" : d.action === "refer" ? "referred" : "escalated";
+    map.set(d.alertId, cur);
+  }
+  return map;
+}
+var isClosed = (s) => s === "cleared" || s === "referred";
+
 // src/engine/world.ts
 var CURRENT_USER = "you (demo credit officer)";
 function intakeAudit(b, at) {
@@ -1088,6 +1205,26 @@ function policyAudit(p) {
 }
 function aiAudit(ref, out, at) {
   return { at, actor: "kredit assistant (demo)", actorType: "ai", type: "AI_OUTPUT", ref, summary: `${out.title} (advisory only)`, payload: { task: out.task, title: out.title, body: out.body } };
+}
+function fincrimeAudit(d, alert) {
+  return {
+    at: d.at,
+    actor: d.by,
+    actorType: "human",
+    type: "FINCRIME_DISPOSITION",
+    ref: alert.id,
+    summary: `${alert.businessName}: ${alert.title} \xB7 ${ACTION_LABEL[d.action].toLowerCase()}`,
+    payload: { ...d, businessId: alert.businessId }
+  };
+}
+function validateDisposition(alert, status, input, by, at) {
+  if (!alert) throw new ValidationError("Alert not found.");
+  if (isClosed(status)) throw new ValidationError("This alert is already closed.");
+  if (!["clear", "escalate", "refer"].includes(input.action)) throw new ValidationError("Unknown action.");
+  if (input.action === "escalate" && status === "escalated") throw new ValidationError("Already escalated.");
+  const note = (input.note ?? "").trim();
+  if (note.length < 10) throw new ValidationError("A note of at least 10 characters is required.");
+  return { alertId: alert.id, action: input.action, note, by, at };
 }
 var ValidationError = class extends Error {
 };
@@ -1188,6 +1325,15 @@ async function handle(db, req, now = /* @__PURE__ */ new Date(), actor = CURRENT
       const audit = await db.appendAudit([aiAudit(ref, out, at)]);
       return { ai: out, audit };
     }
+    case "fincrime": {
+      const businessId = /^FC-(BIZ-[A-Z0-9]+)-/.exec(req.alertId ?? "")?.[1];
+      const b = businessId ? await db.business(businessId) : null;
+      const alert = b ? buildAlerts([b]).find((a) => a.id === req.alertId) : void 0;
+      const status = alertStatuses(await db.auditOfType("FINCRIME_DISPOSITION")).get(req.alertId)?.status ?? "open";
+      const d = validateDisposition(alert, status, req, actor, at);
+      const audit = await db.appendAudit([fincrimeAudit(d, alert)]);
+      return { audit };
+    }
     default:
       throw new ValidationError("Unknown operation.");
   }
@@ -1256,6 +1402,11 @@ function supabaseDb(client) {
     recordHuman: (decisionId, human, audit) => rpc(client, "kredit_record_human", { p_decision_id: decisionId, p_human: human, p_audit: auditJson(audit) }),
     publishPolicy: (p, audit) => rpc(client, "kredit_publish_policy", { p_policy: p, p_audit: auditJson(audit) }),
     appendAudit: (audit) => rpc(client, "kredit_append_audit", { p_entries: auditJson(audit) }),
+    async auditOfType(type) {
+      const { data, error } = await client.from("audit_log").select("*").eq("type", type).order("seq");
+      if (error) throw new Error(error.message);
+      return (data ?? []).map(rowToAudit);
+    },
     // seed target
     async reset() {
       const { error } = await client.rpc("kredit_admin_reset");

@@ -57,6 +57,7 @@ function pgDb(): KreditDb & SeedTarget {
     recordHuman: (id, h, a) => rpc("select * from public.kredit_record_human($1,$2,$3)", [id, j(h), j(auditJson(a))]),
     publishPolicy: (p, a) => rpc("select * from public.kredit_publish_policy($1,$2)", [j(p), j(auditJson(a))]),
     appendAudit: (a) => rpc("select * from public.kredit_append_audit($1)", [j(auditJson(a))]),
+    auditOfType: async (t) => (await svc<AuditRow>("select * from public.audit_log where type = $1 order by seq", [t])).map(rowToAudit),
     reset: async () => { await svc("select public.kredit_admin_reset()"); },
     insertPolicies: (ps) => insert("policies", ps.map(policyRow)),
     insertBusinesses: (bs) => insert("businesses", bs.map(businessRow)),
@@ -173,6 +174,18 @@ d("Supabase schema + kredit-api (writes)", () => {
     expect(r.audit[0].type).toBe("POLICY_PUBLISHED");
     const o = await handle(db, { op: "onboard", input: { name: "After Policy Co", industry: "Retail store", state: "TX", entityType: "LLC", monthsInBusiness: 30, ownerName: "Kim Park", ownerCreditScore: 690, requestedAmount: 40000, requestedTermMonths: 12, purpose: "Inventory", statedAnnualRevenue: 500000, bankProfile: "average", kycScenario: "clean" } });
     expect(o.decision?.policyVersion).toBe("POL-1.1");
+  });
+
+  it("records financial crime dispositions in the audit chain and refuses actions on closed alerts", async () => {
+    const { buildAlerts } = await import("../engine/fincrime");
+    const alert = buildAlerts(await db.allBusinesses())[0];
+    await expect(handle(db, { op: "fincrime", alertId: alert.id, action: "clear", note: "short" })).rejects.toThrow(/note/);
+    const r = await handle(db, { op: "fincrime", alertId: alert.id, action: "escalate", note: "Media article names the owner; needs senior review." });
+    expect(r.audit[0]).toMatchObject({ type: "FINCRIME_DISPOSITION", ref: alert.id });
+    await handle(db, { op: "fincrime", alertId: alert.id, action: "clear", note: "Different person: owner's middle name and city differ." });
+    await expect(handle(db, { op: "fincrime", alertId: alert.id, action: "refer", note: "Trying to reopen a closed alert." })).rejects.toThrow(/closed/);
+    await expect(handle(db, { op: "fincrime", alertId: "FC-BIZ-99999-TM-SPIKE-2026-10", action: "clear", note: "Alert that does not exist." })).rejects.toThrow(/not found/);
+    expect((await verify()).ok).toBe(true);
   });
 
   it("logs AI output as advisory and refuses decline letters for non-declined files", async () => {

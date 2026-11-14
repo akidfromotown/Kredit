@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Activity, BookOpen, ClipboardCheck, Database, FileText, Gauge, LayoutDashboard, Moon, ScrollText, Sun, UserPlus, Wallet,
+  Activity, BookOpen, ShieldAlert, ClipboardCheck, Database, FileText, Gauge, LayoutDashboard, Moon, ScrollText, Sun, UserPlus, Wallet,
 } from "lucide-react";
 import { useRoute } from "./router";
 import { useStore } from "./store";
@@ -16,6 +16,7 @@ import MonitoringPage from "./pages/Monitoring";
 import CollectionsPage from "./pages/Collections";
 import AuditPage from "./pages/Audit";
 import DataModelPage from "./pages/DataModel";
+import FinCrimePage from "./pages/FinCrime";
 
 type NavItem = { id: string; label: string; icon: typeof LayoutDashboard };
 const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
@@ -28,6 +29,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   { title: "Manage risk", items: [
     { id: "monitoring", label: "Monitoring", icon: Activity },
     { id: "collections", label: "Collections & loss", icon: Wallet },
+    { id: "fincrime", label: "Financial crime", icon: ShieldAlert },
   ] },
   { title: "Govern", items: [
     { id: "policy", label: "Credit policy", icon: BookOpen },
@@ -58,7 +60,8 @@ function useTheme() {
 
 export default function App() {
   const route = useRoute();
-  const { world, mode } = useStore();
+  const { world, mode, alerts } = useStore();
+  const openHigh = alerts.filter((a) => a.status === "open" && a.severity === "high").length;
   const [dark, setDark] = useTheme();
   const pending = Object.values(world.decisions).filter((d) => d.engineOutcome === "REVIEW" && !d.human).length;
   const section = route[0];
@@ -73,13 +76,14 @@ export default function App() {
     case "collections": page = <CollectionsPage />; break;
     case "audit": page = <AuditPage />; break;
     case "data": page = <DataModelPage />; break;
+    case "fincrime": page = <FinCrimePage />; break;
     default: page = <PortfolioPage />;
   }
 
   const isActive = (id: string) => section === id || (!NAV.some((x) => x.id === section) && id === "portfolio");
   const badge = (id: string) =>
-    id === "review" && pending > 0 ? (
-      <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground tabular-nums">{pending}<span className="h-1.5 w-1.5 rounded-full bg-signal" /></span>
+    (id === "review" && pending > 0) || (id === "fincrime" && openHigh > 0) ? (
+      <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground tabular-nums">{id === "review" ? pending : openHigh}<span className="h-1.5 w-1.5 rounded-full bg-signal" /></span>
     ) : null;
 
   return (

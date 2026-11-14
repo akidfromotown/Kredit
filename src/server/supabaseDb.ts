@@ -54,6 +54,11 @@ export function supabaseDb(client: SupabaseClient): KreditDb & SeedTarget {
     recordHuman: (decisionId, human, audit) => rpc(client, "kredit_record_human", { p_decision_id: decisionId, p_human: human, p_audit: auditJson(audit) }),
     publishPolicy: (p, audit) => rpc(client, "kredit_publish_policy", { p_policy: p, p_audit: auditJson(audit) }),
     appendAudit: (audit) => rpc(client, "kredit_append_audit", { p_entries: auditJson(audit) }),
+    async auditOfType(type) {
+      const { data, error } = await client.from("audit_log").select("*").eq("type", type).order("seq");
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as AuditRow[]).map(rowToAudit);
+    },
 
     // seed target
     async reset() {

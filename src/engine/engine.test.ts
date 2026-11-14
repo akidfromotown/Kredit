@@ -109,3 +109,26 @@ describe("audit log", () => {
     expect(verifyChain(log)).toEqual({ ok: false, brokenAt: 3 });
   });
 });
+
+describe("financial crime", () => {
+  it("raises deterministic screening and monitoring alerts", async () => {
+    const { buildAlerts } = await import("./fincrime");
+    const a = buildAlerts(biz);
+    expect(a.length).toBeGreaterThan(20);
+    expect(a.some((x) => x.source === "monitoring")).toBe(true);
+    expect(buildAlerts(biz).map((x) => x.id)).toEqual(a.map((x) => x.id));
+  });
+
+  it("requires a note, and closed alerts cannot be acted on again", async () => {
+    const { buildAlerts, alertStatuses } = await import("./fincrime");
+    const { validateDisposition, fincrimeAudit } = await import("./world");
+    const alert = buildAlerts(biz)[0];
+    expect(() => validateDisposition(alert, "open", { action: "clear", note: "short" }, "t", "2026-11-01T00:00:00Z")).toThrow(/note/);
+    const d = validateDisposition(alert, "open", { action: "clear", note: "Different person, date of birth does not match." }, "t", "2026-11-01T00:00:00Z");
+    const log: AuditEntry[] = [];
+    appendAudit(log, fincrimeAudit(d, alert));
+    const st = alertStatuses(log).get(alert.id)!;
+    expect(st.status).toBe("cleared");
+    expect(() => validateDisposition(alert, st.status, { action: "refer", note: "Changing my mind after closing." }, "t", "2026-11-02T00:00:00Z")).toThrow(/closed/);
+  });
+});

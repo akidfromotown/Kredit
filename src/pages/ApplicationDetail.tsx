@@ -402,11 +402,27 @@ function BankTab({ b }: { b: Business }) {
 }
 
 function KycTab({ b }: { b: Business }) {
+  const { alerts } = useStore();
+  const mine = alerts.filter((a) => a.businessId === b.id);
   return (
     <div className="grid md:grid-cols-2 gap-4">
+      <Card className="md:col-span-2">
+        <CardHead title="Financial crime" right={<a href="#fincrime" className="text-[11px] text-muted-foreground hover:text-foreground">Alert queue</a>} />
+        {mine.length === 0 ? <p className="px-5 pb-5 text-sm text-muted-foreground">No screening hits or monitoring alerts.</p> : (
+          <ul className="px-5 pb-4">
+            {mine.map((a) => (
+              <li key={a.id} className="flex items-baseline gap-3 py-2.5 border-t border-[hsl(var(--glass-line))] first:border-t-0 text-[13px]">
+                <span className="font-medium shrink-0">{a.title}</span>
+                <span className="text-muted-foreground truncate">{a.detail}</span>
+                <span className="ml-auto shrink-0 text-[12px] capitalize">{a.status}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
       {(["KYB", "KYC"] as const).map((g) => (
         <Card key={g}>
-          <CardHead title={g === "KYB" ? "Know your business" : "Know your customer (principal owner)"} sub="Mocked providers; results are seeded per applicant" />
+          <CardHead title={g === "KYB" ? "Know your business" : "Know your customer"} />
           <div className="px-5 pb-5 space-y-3">
             {b.kyc.filter((c) => c.group === g).map((c) => (
               <div key={c.id} className="flex gap-3 items-start">

@@ -15,6 +15,8 @@ import {
   type UserAction, type World,
 } from "./engine/world";
 import type { NewBusinessInput } from "./engine/data";
+import { alertStatuses, buildAlerts, type AlertStatus, type DispositionAction, type FinCrimeAlert } from "./engine/fincrime";
+import { validateDisposition } from "./engine/world";
 import type { ApiResponse, OnboardInput } from "./server/api";
 import { backendEnabled, callApi, loadRemoteWorld, verifyRemoteAudit } from "./data/remote";
 
@@ -58,6 +60,8 @@ interface Store {
   onboard: (input: OnboardInput) => Promise<Decision>;
   logAi: (task: AiTask, businessId: string | undefined, out: AiOutput) => void;
   verifyAudit: () => Promise<{ ok: boolean; entries: number; brokenAt?: number }>;
+  alerts: (FinCrimeAlert & { status: AlertStatus })[];
+  recordDisposition: (alertId: string, action: DispositionAction, note: string) => Promise<void>;
   reset: () => void;
   userActionCount: number;
 }
@@ -80,7 +84,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const loans = bookLoans(state.world.businesses, state.world.decisions);
     const byId = new Map(state.world.businesses.map((b) => [b.id, b]));
     const triggers = loans.flatMap((l) => accountTriggers(l, byId.get(l.businessId)!));
-    return { loans, triggers };
+    const statuses = alertStatuses(state.world.audit);
+    const alerts = buildAlerts(state.world.businesses).map((a) => ({ ...a, status: statuses.get(a.id)?.status ?? ("open" as AlertStatus) }));
+    return { loans, triggers, alerts };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.version]);
 
@@ -134,6 +140,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     version: state.version,
     loans: derived.loans,
     triggers: derived.triggers,
+    alerts: derived.alerts,
+
+    async recordDisposition(alertId, action, note) {
+      if (backendEnabled) return merge(await callApi({ op: "fincrime", alertId, action, note }));
+      const alert = derived.alerts.find((a) => a.id === alertId);
+      const at = now();
+      const d = validateDisposition(alert, alert?.status ?? "open", { action, note }, CURRENT_USER, at);
+      push({ t: "fincrime", at, disposition: d, alert: { id: alert!.id, businessId: alert!.businessId, businessName: alert!.businessName, title: alert!.title } });
+    },
     policy: activePolicy(state.world),
     userActionCount: state.actions.length,
 

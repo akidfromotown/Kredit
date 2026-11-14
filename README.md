@@ -75,6 +75,13 @@ Never put the service role key in `.env.local` or anywhere the browser can see i
 | 10 | Portfolio dashboard | Portfolio page |
 | 11 | AI assistant: document screen, credit memo, decline explanation, warning summary | `engine/assistant.ts` (deterministic templates in demo mode) |
 | 12 | Audit log of every decision, review, override, policy change and AI output | `engine/audit.ts`, Audit page |
+| — | Financial crime: sanctions / PEP / adverse-media screening, transaction monitoring, alert queue with dispositions | `engine/fincrime.ts`, Financial crime page |
+
+## Financial crime and screening connectors
+
+Screening runs through a `ScreeningProvider` interface in `src/engine/fincrime.ts`. A provider takes subjects (the business and its owner) and returns hits with list, match score, category, headline, source and date. Today only a deterministic demo provider, with fictional hits and outlets, is connected. A real adverse-media, sanctions or PEP vendor plugs in by implementing the same interface server-side, in the `kredit-api` function with its key stored as a Supabase secret, so credentials never reach the browser.
+
+Transaction monitoring rules (deposit spikes, large owner injections, funds passing through) run on the bank data. Analysts clear, escalate or refer each alert with a required note. Dispositions are stored only as `FINCRIME_DISPOSITION` audit entries, so alert status is rebuilt from the tamper-evident log. Alerts never change a credit decision.
 
 ## How the demo world works
 

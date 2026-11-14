@@ -10,8 +10,9 @@ import { decide, finalStatus, type Decision } from "../engine/decision";
 import type { CreditPolicy } from "../engine/policy";
 import { accountTriggers, bookLoans } from "../engine/portfolio";
 import type { Business } from "../engine/types";
+import { alertStatuses, buildAlerts, type DispositionAction } from "../engine/fincrime";
 import {
-  CURRENT_USER, ValidationError, aiAudit, decisionAudit, humanAudit, intakeAudit, policyAudit,
+  CURRENT_USER, ValidationError, aiAudit, decisionAudit, fincrimeAudit, humanAudit, intakeAudit, policyAudit, validateDisposition,
   validateHuman, validateNewBusiness, validatePolicyDraft,
 } from "../engine/world";
 
@@ -25,6 +26,8 @@ export interface KreditDb {
   recordHuman(decisionId: string, human: NonNullable<Decision["human"]>, audit: AuditInput[]): Promise<AuditEntry[]>;
   publishPolicy(p: CreditPolicy, audit: AuditInput[]): Promise<AuditEntry[]>;
   appendAudit(audit: AuditInput[]): Promise<AuditEntry[]>;
+  /** Audit entries of one type, oldest first. */
+  auditOfType(type: string): Promise<AuditEntry[]>;
 }
 
 export type OnboardInput = Omit<NewBusinessInput, "id" | "appliedOn">;
@@ -33,7 +36,8 @@ export type ApiRequest =
   | { op: "onboard"; input: OnboardInput }
   | { op: "human"; businessId: string; action: "APPROVE" | "DECLINE"; note: string; reasonCodes?: string[]; amount?: number }
   | { op: "publish"; policy: CreditPolicy; note: string }
-  | { op: "ai"; task: AiTask; businessId?: string };
+  | { op: "ai"; task: AiTask; businessId?: string }
+  | { op: "fincrime"; alertId: string; action: DispositionAction; note: string };
 
 export interface ApiResponse {
   audit: AuditEntry[];
@@ -96,6 +100,15 @@ export async function handle(db: KreditDb, req: ApiRequest, now = new Date(), ac
       }
       const audit = await db.appendAudit([aiAudit(ref, out, at)]);
       return { ai: out, audit };
+    }
+    case "fincrime": {
+      const businessId = /^FC-(BIZ-[A-Z0-9]+)-/.exec(req.alertId ?? "")?.[1];
+      const b = businessId ? await db.business(businessId) : null;
+      const alert = b ? buildAlerts([b]).find((a) => a.id === req.alertId) : undefined;
+      const status = alertStatuses(await db.auditOfType("FINCRIME_DISPOSITION")).get(req.alertId)?.status ?? "open";
+      const d = validateDisposition(alert, status, req, actor, at);
+      const audit = await db.appendAudit([fincrimeAudit(d, alert!)]);
+      return { audit };
     }
     default:
       throw new ValidationError("Unknown operation.");
