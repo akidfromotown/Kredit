@@ -32,7 +32,7 @@ export default function CollectionsPage() {
           return (
             <button key={s.id} onClick={() => setStage(s.id)} className="text-left">
               <Card className={`p-4 transition-colors ${stage === s.id ? "!bg-foreground/[0.07]" : ""}`}>
-                <div className="micro">{s.name} · {s.dpd} DPD</div>
+                <div className="micro h-4 truncate">{s.name} · {s.dpd} DPD</div>
                 <div className="mt-3 flex items-baseline gap-1.5"><span className="num text-[30px] leading-none">{ls.length}</span><span className="text-xs text-muted-foreground">accounts</span>{stage === s.id && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-signal" />}</div>
                 <div className="text-xs text-muted-foreground mt-1.5 tabular-nums">{usd(bal, true)}</div>
               </Card>

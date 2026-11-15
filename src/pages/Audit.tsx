@@ -79,12 +79,13 @@ export default function AuditPage() {
         right={<div className="flex items-center gap-2">{copied && <span className="text-xs text-muted-foreground">{copied === "ok" ? "Copied to clipboard" : "Clipboard unavailable here"}</span>}<Button variant="outline" onClick={copyJson}><Copy className="h-4 w-4" />Copy as JSON</Button></div>}
       />
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-        <Card className="p-4 flex items-center gap-3">
-          {!chain || chain.ok ? <ShieldCheck className={`h-7 w-7 ${chain ? "text-gain" : "text-muted-foreground"}`} /> : <ShieldX className="h-7 w-7 text-loss" />}
-          <div>
-            <div className="micro">{mode === "backend" ? "SHA-256 chain (database)" : "Hash chain"}</div>
-            <div className="font-semibold">{!chain ? "Checking…" : chain.ok ? `Intact · ${chain.entries.toLocaleString()} entries` : `Broken at #${chain.brokenAt}`}</div>
+        <Card className="p-4 flex flex-col">
+          <div className="micro flex items-center h-4 gap-1.5">
+            {!chain || chain.ok ? <ShieldCheck className={`h-3.5 w-3.5 ${chain ? "text-gain" : ""}`} /> : <ShieldX className="h-3.5 w-3.5 text-loss" />}
+            <span className="truncate">{mode === "backend" ? "SHA-256 chain" : "Hash chain"}</span>
           </div>
+          <div className={`num text-[30px] leading-none mt-3 whitespace-nowrap ${chain && !chain.ok ? "text-loss" : ""}`}>{!chain ? "…" : chain.ok ? "Intact" : `Broken #${chain.brokenAt}`}</div>
+          {chain && <div className="text-[11px] text-muted-foreground mt-2">{chain.entries.toLocaleString()} entries</div>}
         </Card>
         <Stat label="Decisions" value={count("DECISION")} />
         <Stat label="Reviews resolved" value={count("REVIEW_RESOLVED")} />

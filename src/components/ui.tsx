@@ -96,8 +96,8 @@ export function Stat({ label, value, tone, term, spark, sparkTone, delta }: {
 }) {
   return (
     <Card className="p-4 flex flex-col">
-      <div className="micro flex items-center">{label}{term && <InfoTip term={term} align="left" />}</div>
-      <div className={cn("num text-[30px] leading-none mt-3", tone === "gain" && "text-gain", tone === "loss" && "text-loss", tone === "warn" && "text-warn")}>{value}</div>
+      <div className="micro flex items-center h-4 min-w-0"><span className="truncate">{label}</span>{term && <InfoTip term={term} align="left" />}</div>
+      <div className={cn("num text-[30px] leading-none mt-3 whitespace-nowrap", tone === "gain" && "text-gain", tone === "loss" && "text-loss", tone === "warn" && "text-warn")}>{value}</div>
       {spark && <div className="mt-2.5 -mx-0.5"><Sparkline values={spark} tone={sparkTone} /></div>}
       {delta && (
         <div className={cn("text-[11px] font-semibold mt-2", delta.good === true && "text-gain", delta.good === false && "text-loss", delta.good === null && "text-muted-foreground")}>{delta.text}</div>

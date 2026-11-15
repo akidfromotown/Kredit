@@ -15,11 +15,11 @@ const BAND_SHADE: Record<string, string> = { A: "bg-foreground/90", B: "bg-foreg
 
 function Attention({ href, count, label, flag }: { href: string; count: string | number; label: string; flag: boolean }) {
   return (
-    <a href={href} className="group glass rounded-2xl px-4 py-3.5 flex items-center gap-3 transition-colors hover:bg-foreground/[0.03]">
+    <a href={href} className="group glass rounded-2xl px-4 py-3.5 flex items-baseline gap-3 transition-colors hover:bg-foreground/[0.03]">
       <span className="num text-2xl leading-none">{count}</span>
       <span className="text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
-      {flag && <span className="h-1.5 w-1.5 rounded-full bg-signal" />}
-      <ArrowUpRight className="ml-auto h-4 w-4 text-muted-foreground/60 group-hover:text-foreground transition-colors" />
+      {flag && <span className="h-1.5 w-1.5 rounded-full bg-signal self-center" />}
+      <ArrowUpRight className="ml-auto self-center h-4 w-4 text-muted-foreground/60 group-hover:text-foreground transition-colors" />
     </a>
   );
 }
@@ -112,8 +112,8 @@ export default function PortfolioPage() {
       </div>
 
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
-        <Card className="p-5 md:col-span-2">
-          <div className="micro flex items-center">Outstanding<InfoTip term="outstanding" align="left" /></div>
+        <Card className="p-4 md:col-span-2">
+          <div className="micro flex items-center h-4">Outstanding<InfoTip term="outstanding" align="left" /></div>
           <div className="flex items-baseline gap-2 mt-3">
             <span className="num text-[40px] leading-none">{usd(m.outstanding, true)}</span>
             <span className="text-sm text-muted-foreground">of {usd(m.originated, true)} lent</span>

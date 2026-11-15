@@ -63,6 +63,13 @@ export default function App() {
   const { world, mode, alerts } = useStore();
   const openHigh = alerts.filter((a) => a.status === "open" && a.severity === "high").length;
   const [dark, setDark] = useTheme();
+  const [collapsed, setCollapsedState] = useState(() => {
+    try { return localStorage.getItem("kredit.sidebar") === "collapsed"; } catch { return false; }
+  });
+  const setCollapsed = (v: boolean) => {
+    setCollapsedState(v);
+    try { localStorage.setItem("kredit.sidebar", v ? "collapsed" : "open"); } catch { /* ignore */ }
+  };
   const pending = Object.values(world.decisions).filter((d) => d.engineOutcome === "REVIEW" && !d.human).length;
   const section = route[0];
 
@@ -115,21 +122,39 @@ export default function App() {
         </nav>
       </header>
       <div className="flex">
-        <aside className="hidden lg:block w-64 shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] p-3">
-          <div className="panel rounded-2xl h-full flex flex-col py-4">
-            <nav className="flex-1 overflow-y-auto">
+        <aside className={cn("hidden lg:block shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] p-3 transition-[width] duration-300 ease-out", collapsed ? "w-[84px]" : "w-64")}>
+          <div className="panel rounded-2xl h-full flex flex-col pt-3.5 pb-4 overflow-hidden">
+            {/* window buttons: yellow collapses / expands the sidebar */}
+            <div className={cn("group/lights flex items-center gap-2 mb-3", collapsed ? "justify-center px-0" : "px-5")}>
+              <span aria-hidden="true" className="h-3 w-3 rounded-full bg-[#ff5f57] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.25)]" />
+              <button
+                type="button"
+                onClick={() => setCollapsed(!collapsed)}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!collapsed}
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="grid place-items-center h-3 w-3 rounded-full bg-[#febc2e] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.25)] focus-visible:outline-offset-1"
+              >
+                <span className="text-[9px] leading-none font-bold text-black/60 opacity-0 group-hover/lights:opacity-100 transition-opacity">{collapsed ? "+" : "−"}</span>
+              </button>
+              <span aria-hidden="true" className="h-3 w-3 rounded-full bg-[#28c840] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.25)]" />
+            </div>
+            <nav className="flex-1 overflow-y-auto overflow-x-hidden">
               {NAV_GROUPS.map((g, gi) => (
-                <div key={g.title} className={cn("px-3", gi > 0 && "mt-3 pt-3 border-t border-[hsl(var(--glass-line))] mx-3 px-0")}>
-                  <div className="micro px-3 pb-1.5">{g.title}</div>
+                <div key={g.title} className={cn(gi > 0 && "mt-3 pt-3 border-t border-[hsl(var(--glass-line))]", "mx-3")}>
+                  {!collapsed && <div className="micro px-3 pb-1.5 whitespace-nowrap">{g.title}</div>}
                   <div className="space-y-0.5">
                     {g.items.map((n) => {
                       const on = isActive(n.id);
+                      const count = n.id === "review" ? pending : n.id === "fincrime" ? openHigh : 0;
                       return (
-                        <a key={n.id} href={`#${n.id}`} aria-current={on ? "page" : undefined} className={cn("relative flex items-center gap-2.5 px-3 h-9 rounded-lg text-[13px] transition-colors", on ? "bg-foreground/[0.07] text-foreground font-medium" : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04]")}>
+                        <a key={n.id} href={`#${n.id}`} aria-current={on ? "page" : undefined} title={collapsed ? n.label : undefined} aria-label={collapsed ? n.label : undefined}
+                          className={cn("relative flex items-center h-9 rounded-lg text-[13px] transition-colors", collapsed ? "justify-center" : "gap-2.5 px-3", on ? "bg-foreground/[0.07] text-foreground font-medium" : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04]")}>
                           {on && <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-signal" />}
-                          <n.icon className="h-4 w-4" strokeWidth={1.75} />
-                          <span>{n.label}</span>
-                          {badge(n.id)}
+                          <n.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                          {collapsed
+                            ? count > 0 && <span className="absolute top-1.5 right-2.5 h-1.5 w-1.5 rounded-full bg-signal" />
+                            : <><span className="whitespace-nowrap">{n.label}</span>{badge(n.id)}</>}
                         </a>
                       );
                     })}
@@ -137,12 +162,14 @@ export default function App() {
                 </div>
               ))}
             </nav>
-            <div className="mx-3 mt-3 pt-3 border-t border-[hsl(var(--glass-line))] flex items-center gap-3 px-3">
-              <span className="grid place-items-center h-8 w-8 rounded-full border border-[hsl(var(--glass-line))] text-[11px] text-muted-foreground">CR</span>
-              <span className="min-w-0">
-                <span className="block text-[13px] font-medium">Credit risk</span>
-                <span className="block text-[11px] text-muted-foreground">Demo workspace</span>
-              </span>
+            <div className={cn("mx-3 mt-3 pt-3 border-t border-[hsl(var(--glass-line))] flex items-center gap-3", collapsed ? "justify-center" : "px-3")}>
+              <span className="grid place-items-center h-8 w-8 shrink-0 rounded-full border border-[hsl(var(--glass-line))] text-[11px] text-muted-foreground" title="Credit risk · demo workspace">CR</span>
+              {!collapsed && (
+                <span className="min-w-0 whitespace-nowrap">
+                  <span className="block text-[13px] font-medium">Credit risk</span>
+                  <span className="block text-[11px] text-muted-foreground">Demo workspace</span>
+                </span>
+              )}
             </div>
           </div>
         </aside>
