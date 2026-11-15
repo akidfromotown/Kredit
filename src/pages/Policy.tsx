@@ -236,7 +236,7 @@ function Impact({ active, draft, changes, note, setNote, onPublish, worldSize, b
                 <Stat label="Decline" value={ran.b.decline} sub={`${ran.b.decline - ran.a.decline >= 0 ? "+" : ""}${ran.b.decline - ran.a.decline} vs active`} />
                 <Stat label="Outcomes changed" value={ran.moved.length} />
               </div>
-              <TableWrap>
+              <TableWrap className="-mx-5">
                 <table className="tbl">
                   <thead><tr><th>Metric</th><th className="text-right">Active {active.version}</th><th className="text-right">Draft</th></tr></thead>
                   <tbody>

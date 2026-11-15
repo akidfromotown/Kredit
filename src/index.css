@@ -140,12 +140,20 @@
   }
 
   .micro { @apply text-[10px] uppercase tracking-[0.14em] text-muted-foreground font-medium; }
-  .num { @apply font-light tracking-tight tabular-nums; }
+  /* Large thin figures: pull in the glyphs' built-in left spacing so the ink lines up with the label above. */
+  .num { @apply font-light tracking-tight tabular-nums; margin-left: -0.04em; }
   .tbl { @apply w-full text-sm; }
   .tbl th { @apply text-left font-medium text-xs text-muted-foreground px-3 py-2 whitespace-nowrap; border-bottom: 1px solid hsl(var(--glass-line)); }
   .tbl td { @apply px-3 py-2 whitespace-nowrap tabular-nums; border-bottom: 1px solid hsl(var(--glass-line)); }
   .tbl tbody tr:last-child td { border-bottom: 0; }
   .tbl tbody tr:hover { @apply bg-muted/40; }
+  /* Column alignment set on a cell must win over the table defaults above. */
+  .tbl th.text-right, .tbl td.text-right { text-align: right; }
+  .tbl th.text-center, .tbl td.text-center { text-align: center; }
+  .tbl th.whitespace-normal, .tbl td.whitespace-normal { white-space: normal; }
+  /* Outer columns line up with the card title (card padding is 1.25rem). */
+  .tbl th:first-child, .tbl td:first-child { padding-left: 1.25rem; }
+  .tbl th:last-child, .tbl td:last-child { padding-right: 1.25rem; }
   .inp { @apply h-9 rounded-xl border bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30; }
 }
 
